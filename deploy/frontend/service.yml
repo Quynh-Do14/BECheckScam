@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai6-frontend-service
+  namespace: default
+  labels:
+    app: ai6-frontend
+    tier: frontend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    app: ai6-frontend
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai6-frontend-loadbalancer
+  namespace: default
+  labels:
+    app: ai6-frontend
+    tier: external
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    app: ai6-frontend

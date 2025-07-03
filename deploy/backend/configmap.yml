@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai6-config
+  namespace: default
+data:
+  # Application Configuration
+  SPRING_APPLICATION_NAME: "ai6"
+  SERVER_PORT: "8080"
+
+  # Database Configuration
+  SPRING_DATASOURCE_DRIVER_CLASS_NAME: "com.mysql.cj.jdbc.Driver"
+  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql-service:3306/ai6_database?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf-8&useSSL=false"  # ✅ Đổi database name
+
+  # JPA Configuration
+  SPRING_JPA_SHOW_SQL: "true"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: "org.hibernate.dialect.MySQL8Dialect"
+  SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
+
+  # JWT Configuration
+  AI6_JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS: "86400"
+  AI6_JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS: "8640000"
+
+  # API Configuration
+  GEMINI_API_URL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+  OPENROUTER_API_URL: "https://openrouter.ai/api/v1/chat/completions"
+  OPENROUTER_MODEL: "google/gemini-2.0-flash-001"
+  OPENROUTER_TIMEOUT: "30000"
+  OPENROUTER_MAX_RETRIES: "3"
+  OPENROUTER_TEMPERATURE: "0.7"
+  OPENROUTER_MAX_TOKENS: "1200"
+
+  # File Upload Configuration
+  SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: "50MB"
+  SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: "50MB"
+  SPRING_SERVLET_MULTIPART_ENABLED: "true"
+  APP_UPLOAD_DIR: "uploads"
+
+  # Google reCAPTCHA Configuration
+  GOOGLE_RECAPTCHA_VERIFY_URL: "https://www.google.com/recaptcha/api/siteverify"
+
+  # Security APIs Configuration
+  GOOGLE_SAFE_BROWSING_API_URL: "https://safebrowsing.googleapis.com/v4/threatMatches:find"
+  GOOGLE_WEB_RISK_API_URL: "https://webrisk.googleapis.com/v1/uris:search"
+  PHISHTANK_API_URL: "http://checkurl.phishtank.com/checkurl/"
+  VIRUSTOTAL_API_URL: "https://www.virustotal.com/api/v3/urls"
+  URLSCAN_API_URL: "https://urlscan.io/api/v1/scan/"
+
+  # Cache Configuration
+  SPRING_CACHE_TYPE: "caffeine"
+  SPRING_CACHE_CAFFEINE_SPEC: "maximumSize=500,expireAfterWrite=600s"
+
+  # Rate Limiting
+  RESILIENCE4J_RATELIMITER_INSTANCES_OPENROUTER_LIMITFORPERIOD: "50"
+  RESILIENCE4J_RATELIMITER_INSTANCES_OPENROUTER_LIMITREFRESHPERIOD: "1s"
+  RESILIENCE4J_RATELIMITER_INSTANCES_OPENROUTER_TIMEOUTDURATION: "0s"
+
+  # Playwright Configuration
+  PLAYWRIGHT_TIMEOUT: "1000"
+  PLAYWRIGHT_DEFAULT_PROTOCOL: "https://"
+  PLAYWRIGHT_VIEWPORT_WIDTH: "720"
+  PLAYWRIGHT_VIEWPORT_HEIGHT: "1080"
+
+  # Static Resources
+  SPRING_WEB_RESOURCES_STATIC_LOCATIONS: "classpath:/static/,file:cache/"
+
+  # Logging Configuration
+  LOGGING_LEVEL_COM_EXAMPLE_AI6: "INFO"
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: "INFO"
+  LOGGING_LEVEL_ORG_HIBERNATE: "ERROR"
+
+  # Spring Configuration
+  SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"

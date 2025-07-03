@@ -1,0 +1,55 @@
+# Internal Service - cho communication giữa các pods
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai6-service
+  namespace: default
+  labels:
+    app: ai6
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app: ai6
+
+---
+# External Service - LoadBalancer cho access từ bên ngoài
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai6-loadbalancer
+  namespace: default
+  labels:
+    app: ai6
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app: ai6
+
+---
+# MySQL Service - chỉ internal access
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: default
+  labels:
+    app: mysql
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+      name: mysql
+  selector:
+    app: mysql
