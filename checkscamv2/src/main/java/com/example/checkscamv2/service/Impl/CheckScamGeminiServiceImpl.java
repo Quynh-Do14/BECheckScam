@@ -104,7 +104,8 @@ public class CheckScamGeminiServiceImpl implements CheckScamGeminiService {
             default -> throw new IllegalArgumentException("Loại thông tin không hợp lệ: " + request.getType());
         }
 
-        List<ReportDetail> reportDetails = reportDetailRepository.findByInfoAndType(normalizedInfo, typeInt);
+        // Lấy các báo cáo chi tiết có status = 2
+        List<ReportDetail> reportDetails = reportDetailRepository.findByInfoAndTypeAndStatus(normalizedInfo, typeInt, 2);
         String description = null;
         List<String> evidenceUrls = Collections.emptyList();
         String aiAnalysisResult = null;
@@ -131,6 +132,23 @@ public class CheckScamGeminiServiceImpl implements CheckScamGeminiService {
                 aiAnalysisResult = formatAnalysis("Không có dữ liệu chi tiết. Số lần xác thực: " +
                         (stats.getOrDefault("verifiedCount", 0) instanceof Integer ? stats.get("verifiedCount") : 0) + ".");
             }
+        // Nếu là SDT hoặc STK, không có báo cáo hợp lệ thì không phân tích
+        // if ((request.getType() == ScamInfoType.SDT || request.getType() == ScamInfoType.STK) && reportDetails.isEmpty()) {
+        //     String noReportMsg = "chưa có báo cáo";
+        //     return ScamAnalysisResponse.builder()
+        //             .info(normalizedInfo)
+        //             .type(request.getType().ordinal() + 1)
+        //             .description(noReportMsg)
+        //             .reportDescription(noReportMsg)
+        //             .moneyScam(null)
+        //             .dateReport(null)
+        //             .verifiedCount(0)
+        //             .lastReportAt(null)
+        //             .evidenceUrls(null)
+        //             .screenShot(null)
+        //             .analysis(noReportMsg)
+        //             .externalUrlCheckResponses(null)
+        //             .build();
         } else {
             ReportDetail firstReportDetail = reportDetails.get(0);
             description = firstReportDetail.getDescription();
