@@ -12,6 +12,7 @@ import com.example.checkscamv2.dto.response.ResponseObject;
 import com.example.checkscamv2.entity.Activity;
 import com.example.checkscamv2.entity.Attachment;
 import com.example.checkscamv2.entity.Report;
+import com.example.checkscamv2.entity.User;
 import com.example.checkscamv2.exception.*;
 import com.example.checkscamv2.service.ActivityService;
 import com.example.checkscamv2.service.CaptchaService;
@@ -64,9 +65,9 @@ public class ReportController {
                 // Lấy tên từ authentication nếu có
                 if (authentication != null) {
                     String email = authentication.getName();
-                    var user = userService.handleGetUserByUsername(email);
-                    if (user != null && user.getName() != null && !user.getName().trim().isEmpty()) {
-                        reporterName = user.getName();
+                    var  user = userService.handleGetUserByUsername(email);
+                    if (user.isPresent() && user.get().getName() != null && !user.get().getName().trim().isEmpty()) {
+                        reporterName = user.get().getName();
                     }
                 }
                 

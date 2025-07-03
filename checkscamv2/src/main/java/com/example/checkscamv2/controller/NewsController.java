@@ -126,8 +126,8 @@ public class NewsController {
                 
                 // ✅ Lấy tên từ database thay vì sử dụng email
                 var user = userService.handleGetUserByUsername(email);
-                if (user != null && user.getName() != null && !user.getName().trim().isEmpty()) {
-                    userDisplayName = user.getName();
+                if (user.isPresent() && user.get().getName() != null && !user.get().getName().trim().isEmpty()) {
+                    userDisplayName = user.get().getName();
                 }
                 System.out.println("Display name: " + userDisplayName);
                 
@@ -172,8 +172,8 @@ public class NewsController {
             String email = authentication.getName();
             System.out.println("Looking up user by email: " + email);
             var user = userService.handleGetUserByUsername(email);
-            System.out.println("Found user: " + (user != null ? "ID=" + user.getId() : "null"));
-            return user != null ? user.getId() : null;
+            System.out.println("Found user: " + (user.isPresent() ? "ID=" + user.get().getId() : "null"));
+            return user.isPresent() ? user.get().getId() : null;
         } catch (Exception e) {
             System.err.println("Could not extract user ID: " + e.getMessage());
             e.printStackTrace();
