@@ -104,12 +104,32 @@ public class CheckScamGeminiServiceImpl implements CheckScamGeminiService {
             default -> throw new IllegalArgumentException("Loại thông tin không hợp lệ: " + request.getType());
         }
 
-        List<ReportDetail> reportDetails = reportDetailRepository.findByInfoAndType(normalizedInfo, typeInt);
+        // Lấy các báo cáo chi tiết có status = 2
+        List<ReportDetail> reportDetails = reportDetailRepository.findByInfoAndTypeAndStatus(normalizedInfo, typeInt, 2);
         String description = null;
         List<String> evidenceUrls = Collections.emptyList();
         String aiAnalysisResult = null;
         String moneyScam = null;
         LocalDateTime dateReport = null;
+
+        // Đối với SDT và STK, chỉ tra thông tin nếu có báo cáo với status = 2
+        if ((request.getType() == ScamInfoType.SDT || request.getType() == ScamInfoType.STK) && reportDetails.isEmpty()) {
+            String noReportMsg = "Chưa có báo cáo";
+            return ScamAnalysisResponse.builder()
+                    .info(normalizedInfo)
+                    .type(request.getType().ordinal() + 1)
+                    .description(noReportMsg)
+                    .reportDescription(noReportMsg)
+                    .moneyScam(null)
+                    .dateReport(null)
+                    .verifiedCount(0)
+                    .lastReportAt(null)
+                    .evidenceUrls(null)
+                    .screenShot(null)
+                    .analysis(noReportMsg)
+                    .externalUrlCheckResponses(null)
+                    .build();
+        }
 
         if (reportDetails.isEmpty()) {
             if (request.getType() == ScamInfoType.URL) {
@@ -118,18 +138,6 @@ public class CheckScamGeminiServiceImpl implements CheckScamGeminiService {
                         (LocalDateTime) stats.get("lastReportAt") : LocalDateTime.now();
                 aiAnalysisResult = formatAnalysis("Không có dữ liệu chi tiết. Vui lòng kiểm tra ảnh chụp và số lần xác thực (" +
                         (stats.getOrDefault("verifiedCount", 0) instanceof Integer ? stats.get("verifiedCount") : 0) + ") để phân tích thêm.");
-            } else if (request.getType() == ScamInfoType.SDT) {
-                description = "Không có mô tả chi tiết";
-                dateReport = stats.containsKey("lastReportAt") && stats.get("lastReportAt") instanceof LocalDateTime ?
-                        (LocalDateTime) stats.get("lastReportAt") : LocalDateTime.now();
-                aiAnalysisResult = formatAnalysis("Không có dữ liệu chi tiết. Số lần xác thực: " +
-                        (stats.getOrDefault("verifiedCount", 0) instanceof Integer ? stats.get("verifiedCount") : 0) + ".");
-            } else if (request.getType() == ScamInfoType.STK) {
-                description = "Không có mô tả chi tiết";
-                dateReport = stats.containsKey("lastReportAt") && stats.get("lastReportAt") instanceof LocalDateTime ?
-                        (LocalDateTime) stats.get("lastReportAt") : LocalDateTime.now();
-                aiAnalysisResult = formatAnalysis("Không có dữ liệu chi tiết. Số lần xác thực: " +
-                        (stats.getOrDefault("verifiedCount", 0) instanceof Integer ? stats.get("verifiedCount") : 0) + ".");
             }
         } else {
             ReportDetail firstReportDetail = reportDetails.get(0);

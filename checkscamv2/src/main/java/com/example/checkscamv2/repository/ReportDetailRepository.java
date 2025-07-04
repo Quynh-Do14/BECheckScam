@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface ReportDetailRepository extends JpaRepository<ReportDetail, Long> {
     List<ReportDetail> findByInfoAndType(String info, Integer type);
+    List<ReportDetail> findByInfoAndTypeAndStatus(String info, Integer type, Integer status);
+    List<ReportDetail> findByReportId(Long reportId);
 }

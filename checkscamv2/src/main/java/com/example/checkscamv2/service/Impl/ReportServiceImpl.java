@@ -9,19 +9,24 @@ import com.example.checkscamv2.dto.request.CreateReportRequest;
 import com.example.checkscamv2.dto.request.UpdateReportRequest;
 import com.example.checkscamv2.dto.response.RankingPageResponseDTO;
 import com.example.checkscamv2.dto.response.ReporterRankingResponseDTO;
-import com.example.checkscamv2.entity.Attachment;
-import com.example.checkscamv2.entity.Category;
-import com.example.checkscamv2.entity.Report;
-import com.example.checkscamv2.entity.ReportDetail;
+import com.example.checkscamv2.entity.*;
 import com.example.checkscamv2.exception.CheckScamException;
 import com.example.checkscamv2.exception.DataNotFoundException;
 import com.example.checkscamv2.exception.FileUploadValidationException;
 import com.example.checkscamv2.repository.AttachmentRepository;
 import com.example.checkscamv2.repository.CategoryRepository;
 import com.example.checkscamv2.repository.ReportRepository;
+import com.example.checkscamv2.repository.ReportDetailRepository;
+import com.example.checkscamv2.repository.PhoneScamRepository;
+import com.example.checkscamv2.repository.BankScamRepository;
+import com.example.checkscamv2.repository.UrlScamRepository;
+import com.example.checkscamv2.repository.PhoneScamStatsRepository;
+import com.example.checkscamv2.repository.BankScamStatsRepository;
+import com.example.checkscamv2.repository.UrlScamStatsRepository;
 import com.example.checkscamv2.service.ReportService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
@@ -45,11 +50,19 @@ import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class ReportServiceImpl implements ReportService {
     private final ReportRepository reportRepository;
     private final AttachmentRepository attachmentRepository;
     private final FileUtils fileUtils;
     private final CategoryRepository categoryRepository;
+    private final ReportDetailRepository reportDetailRepository;
+    private final PhoneScamRepository phoneScamRepository;
+    private final BankScamRepository bankScamRepository;
+    private final UrlScamRepository urlScamRepository;
+    private final PhoneScamStatsRepository phoneScamStatsRepository;
+    private final BankScamStatsRepository bankScamStatsRepository;
+    private final UrlScamStatsRepository urlScamStatsRepository;
 
     @Transactional
     @Override
@@ -316,7 +329,94 @@ public class ReportServiceImpl implements ReportService {
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy báo cáo với id: " + reportId));
 
         report.setStatus(2);
-        return reportRepository.save(report);
+        List<ReportDetail> details = reportDetailRepository.findByReportId(reportId);
+        for (ReportDetail detail : details) {
+            detail.setStatus(2);
+            if (detail.getType() == 1) { // SDT
+                var phoneScamOpt = phoneScamRepository.findByPhoneNumber(detail.getInfo());
+                PhoneScam phoneScam = phoneScamOpt.orElseGet(() -> {
+                    PhoneScam newPhone = PhoneScam.builder()
+                            .phoneNumber(detail.getInfo())
+                            .ownerName("")
+                            .build();
+                    PhoneScam savedPhone = phoneScamRepository.saveAndFlush(newPhone);
+                    if (savedPhone.getId() == null) {
+                        throw new IllegalStateException("Không thể sinh ID cho PhoneScam: " + detail.getInfo());
+                    }
+                    return savedPhone;
+                });
+
+                PhoneScamStats stats = phoneScamStatsRepository.findById(phoneScam.getId()).orElse(null);
+                if (stats == null) {
+                    stats = PhoneScamStats.builder()
+                            .phoneScam(phoneScam) // @MapsId sẽ tự động gán ID
+                            .verifiedCount(1)
+                            .lastReportAt(LocalDateTime.now())
+                            .viewCount(0)
+                            .build();
+                } else {
+                    stats.setVerifiedCount(stats.getVerifiedCount() == null ? 1 : stats.getVerifiedCount() + 1);
+                    stats.setLastReportAt(LocalDateTime.now());
+                }
+                phoneScamStatsRepository.saveAndFlush(stats);
+            } else if (detail.getType() == 2) { // STK
+                var bankScamOpt = bankScamRepository.findByBankAccount(detail.getInfo());
+                BankScam bankScam = bankScamOpt.orElseGet(() -> {
+                    BankScam newBank = BankScam.builder()
+                            .bankAccount(detail.getInfo())
+                            .bankName("")
+                            .nameAccount("")
+                            .build();
+                    BankScam savedBank = bankScamRepository.saveAndFlush(newBank);
+                    if (savedBank.getId() == null) {
+                        throw new IllegalStateException("Không thể sinh ID cho BankScam: " + detail.getInfo());
+                    }
+                    return savedBank;
+                });
+
+                BankScamStats stats = bankScamStatsRepository.findById(bankScam.getId()).orElse(null);
+                if (stats == null) {
+                    stats = BankScamStats.builder()
+                            .bankScam(bankScam)
+                            .verifiedCount(1)
+                            .lastReportAt(LocalDateTime.now())
+                            .viewCount(0)
+                            .build();
+                } else {
+                    stats.setVerifiedCount(stats.getVerifiedCount() == null ? 1 : stats.getVerifiedCount() + 1);
+                    stats.setLastReportAt(LocalDateTime.now());
+                }
+                bankScamStatsRepository.saveAndFlush(stats);
+            } else if (detail.getType() == 3) { // URL
+                var urlScamOpt = urlScamRepository.findByUrl(detail.getInfo());
+                UrlScam urlScam = urlScamOpt.orElseGet(() -> {
+                    UrlScam newUrl = UrlScam.builder()
+                            .url(detail.getInfo())
+                            .build();
+                    UrlScam savedUrl = urlScamRepository.saveAndFlush(newUrl);
+                    if (savedUrl.getId() == null) {
+                        throw new IllegalStateException("Không thể sinh ID cho UrlScam: " + detail.getInfo());
+                    }
+                    return savedUrl;
+                });
+
+                UrlScamStats stats = urlScamStatsRepository.findById(urlScam.getId()).orElse(null);
+                if (stats == null) {
+                    stats = UrlScamStats.builder()
+                            .urlScam(urlScam)
+                            .verifiedCount(1)
+                            .lastReportAt(LocalDateTime.now())
+                            .viewCount(0)
+                            .build();
+                } else {
+                    stats.setVerifiedCount(stats.getVerifiedCount() == null ? 1 : stats.getVerifiedCount() + 1);
+                    stats.setLastReportAt(LocalDateTime.now());
+                }
+                urlScamStatsRepository.saveAndFlush(stats);
+            }
+        }
+        reportDetailRepository.saveAllAndFlush(details);
+        return reportRepository.saveAndFlush(report);
     }
 
     @Override

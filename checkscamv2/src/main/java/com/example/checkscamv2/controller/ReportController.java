@@ -271,10 +271,6 @@ public class ReportController {
     public ResponseEntity<?> approveReport(@PathVariable Long id) {
         try {
             Report updatedReport = reportService.approveReport(id);
-            
-            // NOTE: Không cần log activity ở đây nữa vì đã log khi tạo báo cáo
-            // Có thể thêm logic update status của activity đã tồn tại nếu cần
-            
             return ResponseEntity.ok(updatedReport);
         } catch (DataNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Lỗi: " + e.getMessage());
