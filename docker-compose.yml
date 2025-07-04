@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  checkscam-app:
+    build: .
+    container_name: checkscam-v2
+    ports:
+      - "8080:8080"
+    environment:
+      # Override database connection for containerized environment if needed
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://103.57.221.26:3306/hlcfwrewhosting_check_scam?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf-8&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=hlcfwrewhosting_check_scam
+      - SPRING_DATASOURCE_PASSWORD=techbyteDev
+    volumes:
+      - ./uploads:/app/uploads
+      - ./cache:/app/cache
+    restart: unless-stopped
+
+  # Nếu muốn chạy MySQL local thay vì dùng external DB, uncomment phần dưới
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: checkscam-mysql
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: rootpassword
+  #     MYSQL_DATABASE: check_scam
+  #     MYSQL_USER: checkscam_user
+  #     MYSQL_PASSWORD: checkscam_pass
+  #   ports:
+  #     - "3307:3306"
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #   restart: unless-stopped
+
+# volumes:
+#   mysql_data:
