@@ -21,26 +21,27 @@ spec:
         ports:
         - containerPort: 8080
         env:
-        - name: SPRING_DATASOURCE_URL
+        # Sensitive environment variables from Secret
+        - name: DB_URL
           valueFrom:
             secretKeyRef:
               name: ai6-be-secret
-              key: SPRING_DATASOURCE_URL
-        - name: SPRING_DATASOURCE_USERNAME
+              key: DB_URL
+        - name: DB_USERNAME
           valueFrom:
             secretKeyRef:
               name: ai6-be-secret
-              key: SPRING_DATASOURCE_USERNAME
-        - name: SPRING_DATASOURCE_PASSWORD
+              key: DB_USERNAME
+        - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
               name: ai6-be-secret
-              key: SPRING_DATASOURCE_PASSWORD
-        - name: CHECKSCAM_JWT_BASE64_SECRET
+              key: DB_PASSWORD
+        - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
               name: ai6-be-secret
-              key: CHECKSCAM_JWT_BASE64_SECRET
+              key: JWT_SECRET
         - name: GEMINI_API_KEY
           valueFrom:
             secretKeyRef:
@@ -76,6 +77,12 @@ spec:
             secretKeyRef:
               name: ai6-be-secret
               key: URLSCAN_API_KEY
+        - name: PHISHTANK_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai6-be-secret
+              key: PHISHTANK_API_KEY
+        # All non-sensitive config from ConfigMap
         envFrom:
         - configMapRef:
             name: ai6-be-config
