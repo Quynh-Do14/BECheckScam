@@ -34,7 +34,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class GoogleAuthController {
 
     @Value("${google.oauth2.client-id}")

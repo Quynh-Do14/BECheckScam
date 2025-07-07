@@ -8,7 +8,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/websocket")
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:3000"})
 public class WebSocketTestController {
     
     @GetMapping("/test")
