@@ -17,11 +17,12 @@ public class WebSocketCorsFilter {
         CorsConfiguration config = new CorsConfiguration();
         
         // Allow specific origins - DO NOT use allowedOriginPatterns with credentials=false
-        config.setAllowedOrigins(Arrays.asList(
-            "http://localhost:4200",
-            "http://localhost:3000", 
-            "http://127.0.0.1:4200"
-        ));
+//        config.setAllowedOrigins(Arrays.asList(
+//            "http://localhost:4200",
+//            "http://localhost:3000",
+//            "http://127.0.0.1:4200"
+//        ));
+        config.addAllowedOriginPattern("*");
         
         // Allow all methods
         config.setAllowedMethods(Arrays.asList("*"));
