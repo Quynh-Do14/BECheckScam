@@ -19,13 +19,13 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations("file:./");
     }
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        // Cấu hình CORS cho phép nguồn https://ai6.vn
-        registry.addMapping("/**")
-                .allowedOrigins("*")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true);
-    }
+//    @Override
+//    public void addCorsMappings(CorsRegistry registry) {
+//        // Cấu hình CORS cho phép nguồn https://ai6.vn
+//        registry.addMapping("/**")
+//                .allowedOrigins("*")
+//                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+//                .allowedHeaders("*")
+//                .allowCredentials(true);
+//    }
 }

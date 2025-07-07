@@ -16,7 +16,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/ranking")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class RankingController {
 
     private final ScamStatsService scamStatsService;
