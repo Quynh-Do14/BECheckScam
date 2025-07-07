@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ai6-be-config
-  namespace: default
+  namespace: ai6
 data:
   # Application Configuration
   SPRING_APPLICATION_NAME: "checkscamv2"
