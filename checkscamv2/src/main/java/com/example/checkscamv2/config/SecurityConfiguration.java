@@ -85,7 +85,7 @@ public class SecurityConfiguration {
 
                 .cors(httpSecurityCorsConfigurer -> {
                     CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(List.of("https://ai6.vn","http://localhost:4200")); // Đảm bảo URL frontend của bạn ở đây
+                    configuration.setAllowedOrigins(List.of("*")); // Đảm bảo URL frontend của bạn ở đây
                     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                     configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
                     configuration.setExposedHeaders(List.of("x-auth-token"));
