@@ -29,6 +29,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -60,7 +61,6 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/**").permitAll()
                         .requestMatchers("/api/v1/users/**").authenticated()
 
-                     //   .requestMatchers(HttpMethod.POST,"/api/v1/report/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/report/image/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/report/ranking/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/report/ranking").permitAll()
@@ -68,28 +68,38 @@ public class SecurityConfiguration {
 
                         .requestMatchers("/api/v1/auth/register").permitAll()
                         .requestMatchers("/api/v1/auth/login").permitAll()
-                        .requestMatchers("/api/v1/auth/google/**").permitAll() // <-- THÊM DÒNG NÀY
+                        .requestMatchers("/api/v1/auth/google/**").permitAll()
 
                         .requestMatchers("/api/v1/check-scam/**").permitAll()
-                        
-                        // WebSocket endpoints - IMPORTANT!
+
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/ws-simple/**").permitAll()
                         .requestMatchers("/sockjs-node/**").permitAll()
                         .requestMatchers("/topic/**").permitAll()
                         .requestMatchers("/app/**").permitAll()
-                        
+
                         .requestMatchers("/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
                 .cors(httpSecurityCorsConfigurer -> {
                     CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(List.of("http://localhost:4200")); // Đảm bảo URL frontend của bạn ở đây
+//                    configuration.setAllowedOrigins(
+//                            Arrays.asList(
+//                                    "http://localhost:3000",
+//                                    "http://localhost:4173",
+//                                    "http://localhost:4200",
+//                                    "http://127.0.0.1:4200",
+//                                    "https://api-v1.ai6.vn",
+//                                    "https://ai6.vn",
+//                                    "https://www.ai6.vn"
+//                            )
+//                    );
+                    configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
                     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                     configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
                     configuration.setExposedHeaders(List.of("x-auth-token"));
-                    configuration.setAllowCredentials(false); // DISABLE CREDENTIALS
+                    configuration.setAllowCredentials(true);
                     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                     source.registerCorsConfiguration("/**", configuration);
                     httpSecurityCorsConfigurer.configurationSource(source);

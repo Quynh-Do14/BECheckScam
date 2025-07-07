@@ -39,7 +39,6 @@ public class UserServiceImpl implements UserService {
 
         Set<Role> roles = user.getRoles();
         if (roles == null || roles.isEmpty()) {
-            // Lấy role "USER" và xử lý Optional
             Optional<Role> defaultUserRoleOptional = roleRepository.findByName(RoleName.USER);
             if (defaultUserRoleOptional.isEmpty()) {
                 throw new RuntimeException("Role 'USER' not found in database. Please ensure it exists.");
@@ -78,8 +77,6 @@ public class UserServiceImpl implements UserService {
         User currentUser = this.fetchUserById(id);
         if (currentUser != null) {
             if (updateUserRequest != null) {
-                // Sử dụng Optional.ofNullable để tránh NullPointerException nếu email, name null
-                // hoặc đảm bảo updateUserRequest.getEmail() và .getName() không null
                 Optional.ofNullable(updateUserRequest.getEmail()).ifPresent(currentUser::setEmail);
                 Optional.ofNullable(updateUserRequest.getName()).ifPresent(currentUser::setName);
 

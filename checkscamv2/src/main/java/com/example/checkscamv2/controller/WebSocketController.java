@@ -10,7 +10,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
 @Controller
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:3000"})
 public class WebSocketController {
     
     @Autowired
