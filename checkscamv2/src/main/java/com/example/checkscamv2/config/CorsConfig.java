@@ -17,7 +17,14 @@ public class CorsConfig {
 
         // Allow specific origins - DO NOT use allowedOriginPatterns with credentials=false
         configuration.setAllowedOrigins(
-                Arrays.asList("http://localhost:3000", "http://localhost:4173", "http://localhost:4200", "http://127.0.0.1:4200", "https://api-v1.ai6.vn"));
+                Arrays.asList("http://localhost:3000",
+                        "http://localhost:4173",
+                        "http://localhost:4200",
+                        "http://127.0.0.1:4200",
+                        "https://api-v1.ai6.vn",
+                        "https://ai6.vn",
+                        "https://www.ai6.vn"
+                ));
         
         // Allow all methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
