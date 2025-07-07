@@ -29,6 +29,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -94,7 +95,7 @@ public class SecurityConfiguration {
 //                                    "https://www.ai6.vn"
 //                            )
 //                    );
-                    configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+                    configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
                     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                     configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
                     configuration.setExposedHeaders(List.of("x-auth-token"));
