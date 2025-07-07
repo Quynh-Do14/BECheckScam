@@ -17,11 +17,12 @@ public class WebSocketSecurityConfig {
         
         // Allow specific origins
         configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:4200", 
-            "http://localhost:3000", 
-            "http://127.0.0.1:4200"
-        ));
+//        configuration.setAllowedOrigins(Arrays.asList(
+//            "http://localhost:4200",
+//            "http://localhost:3000",
+//            "http://127.0.0.1:4200"
+//        ));
+        configuration.addAllowedOriginPattern("*");
         
         // Allow all methods
         configuration.setAllowedMethods(Arrays.asList("*"));
