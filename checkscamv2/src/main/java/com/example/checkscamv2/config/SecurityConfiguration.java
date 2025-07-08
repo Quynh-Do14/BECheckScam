@@ -84,22 +84,37 @@ public class SecurityConfiguration {
 
                 .cors(httpSecurityCorsConfigurer -> {
                     CorsConfiguration configuration = new CorsConfiguration();
-//                    configuration.setAllowedOrigins(
-//                            Arrays.asList(
-//                                    "http://localhost:3000",
-//                                    "http://localhost:4173",
-//                                    "http://localhost:4200",
-//                                    "http://127.0.0.1:4200",
-//                                    "https://api-v1.ai6.vn",
-//                                    "https://ai6.vn",
-//                                    "https://www.ai6.vn"
-//                            )
-//                    );
-                    configuration.addAllowedOriginPattern("*");
-                    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-                    configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
+                    
+                    // Production origins - specific domains for security
+                    configuration.setAllowedOrigins(Arrays.asList(
+                        "http://localhost:3000",
+                        "http://localhost:4200",
+                        "http://127.0.0.1:4200",
+                        "https://localhost:4200",
+                        "https://ai6.vn",
+                        "https://www.ai6.vn"
+                    ));
+                    
+                    // Allow all necessary HTTP methods
+                    configuration.setAllowedMethods(Arrays.asList(
+                        "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+                    ));
+                    
+                    // Allow all necessary headers
+                    configuration.setAllowedHeaders(Arrays.asList(
+                        "authorization", "content-type", "x-auth-token", "Accept", 
+                        "Origin", "X-Requested-With", "Cache-Control"
+                    ));
+                    
+                    // Expose custom headers
                     configuration.setExposedHeaders(List.of("x-auth-token"));
+                    
+                    // Enable credentials for authentication
                     configuration.setAllowCredentials(true);
+                    
+                    // Cache preflight requests
+                    configuration.setMaxAge(3600L);
+                    
                     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                     source.registerCorsConfiguration("/**", configuration);
                     httpSecurityCorsConfigurer.configurationSource(source);
