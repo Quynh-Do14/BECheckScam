@@ -6,7 +6,12 @@ metadata:
   labels:
     app: ai6-be
 spec:
-  replicas: 3
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: ai6-be
@@ -18,8 +23,10 @@ spec:
       containers:
       - name: ai6-be
         image: ai6-be:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
+          name: http
         env:
         # Sensitive environment variables from Secret
         - name: DB_URL
@@ -88,20 +95,49 @@ spec:
             name: ai6-be-config
         resources:
           limits:
-            cpu: "1"
-            memory: "1Gi"
+            cpu: "1000m"
+            memory: "1.5Gi"
           requests:
-            cpu: "0.5"
-            memory: "512Mi"
+            cpu: "500m"
+            memory: "768Mi"
         livenessProbe:
           httpGet:
-            path: /actuator/health
+            path: /actuator/health/liveness
             port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+            scheme: HTTP
           initialDelaySeconds: 30
           periodSeconds: 10
-        readinessProbe:
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        startupProbe:
           httpGet:
             path: /actuator/health
             port: 8080
-          initialDelaySeconds: 15
-          periodSeconds: 5
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 12
+          successThreshold: 1
+        volumeMounts:
+        - name: uploads-volume
+          mountPath: /app/uploads
+        - name: cache-volume
+          mountPath: /app/cache
+      volumes:
+      - name: uploads-volume
+        emptyDir: {}
+      - name: cache-volume
+        emptyDir: {}
+      restartPolicy: Always

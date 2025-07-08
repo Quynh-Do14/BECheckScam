@@ -1,13 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ai6-be-service
+  name: ai6-be
   namespace: default
+  labels:
+    app: ai6-be
 spec:
   selector:
     app: ai6-be
   ports:
-  - protocol: TCP
+  - name: http
+    protocol: TCP
     port: 80
     targetPort: 8080
   type: ClusterIP

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ai6-be-config
-  namespace: ai6
+  namespace: default
 data:
   # Application Configuration
   SPRING_APPLICATION_NAME: "checkscamv2"
@@ -12,10 +12,10 @@ data:
   DB_DRIVER: "com.mysql.cj.jdbc.Driver"
   
   # JPA Configuration
-  SPRING_JPA_SHOW_SQL: "true"
-  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
   SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: "org.hibernate.dialect.MySQL8Dialect"
-  SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
+  SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "false"
   
   # JWT Configuration (non-sensitive)
   JWT_ACCESS_TOKEN_VALIDITY: "86400"
@@ -49,6 +49,7 @@ data:
   LOGGING_LEVEL_COM_EXAMPLE_CHECKSCAMV2: "INFO"
   LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: "INFO"
   LOGGING_LEVEL_ORG_HIBERNATE: "ERROR"
+  LOGGING_LEVEL_ROOT: "WARN"
   
   # Cache Configuration
   SPRING_CACHE_TYPE: "caffeine"
@@ -62,6 +63,14 @@ data:
   # Spring Configuration
   SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
   SPRING_WEB_RESOURCES_STATIC_LOCATIONS: "classpath:/static/,file:cache/"
+  
+  # Actuator Configuration for Health Checks
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "always"
+  MANAGEMENT_HEALTH_DEFAULTS_ENABLED: "true"
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+  MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED: "true"
+  MANAGEMENT_HEALTH_READINESSSTATE_ENABLED: "true"
   
   # Playwright Configuration
   PLAYWRIGHT_TIMEOUT: "1000"

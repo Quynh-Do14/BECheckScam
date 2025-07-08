@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai6-fe-config
+  namespace: default
+data:
+  API_BASE_URL: "http://ai6-be-service/api/v1"
+  API_URL: "http://ai6-be-service"
+  ACTIVITY_FEED_URL: "http://checkscam-activity-feed:3001"
+  PRODUCTION: "true"

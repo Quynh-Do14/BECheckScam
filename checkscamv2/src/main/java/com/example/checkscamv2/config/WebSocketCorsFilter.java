@@ -1,3 +1,4 @@
+
 //package com.example.checkscamv2.config;
 //
 //import org.springframework.context.annotation.Bean;
@@ -37,3 +38,4 @@
 //        return new CorsFilter(source);
 //    }
 //}
+
