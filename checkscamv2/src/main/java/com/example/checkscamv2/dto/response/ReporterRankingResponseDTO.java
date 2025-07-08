@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class ReporterRankingResponseDTO {
     private Long id;
     private String email;
+    private String name;  // ✅ Thêm field name
     private Integer totalReports;
     private Integer approvedReports;
     private Double successRate;

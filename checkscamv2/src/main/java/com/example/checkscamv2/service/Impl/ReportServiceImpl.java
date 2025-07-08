@@ -226,18 +226,21 @@ public class ReportServiceImpl implements ReportService {
 
         for (int i = startIndex; i < endIndex; i++) {
             Object[] row = allData.get(i);
-            String email = (String) row[0];
+            Long userId = row[0] != null ? ((Number) row[0]).longValue() : null;
+            String email = (String) row[1];
+            String name = (String) row[2];  // ✅ Lấy name từ row[2]
             // Lấy APPROVED_COUNT từ report.status = 2
-            Long approvedCount = ((Number) row[1]).longValue();
-            Long totalCount = ((Number) row[2]).longValue();
-            LocalDateTime firstReport = (LocalDateTime) row[3];
-            LocalDateTime lastReport = (LocalDateTime) row[4];
+            Long approvedCount = ((Number) row[3]).longValue();
+            Long totalCount = ((Number) row[4]).longValue();
+            LocalDateTime firstReport = (LocalDateTime) row[5];
+            LocalDateTime lastReport = (LocalDateTime) row[6];
 
             double successRate = totalCount > 0 ? (approvedCount * 100.0 / totalCount) : 0.0;
 
             ReporterRankingResponseDTO dto = ReporterRankingResponseDTO.builder()
-                    .id((long) (i + 1))
+                    .id(userId != null ? userId : (long) (i + 1)) // Sử dụng userId thật, fallback về sequential
                     .email(email)
+                    .name(name != null ? name : "Unknown")  // ✅ Set name, fallback "Unknown"
                     .totalReports(Math.toIntExact(totalCount))
                     .approvedReports(Math.toIntExact(approvedCount))
                     .successRate(Math.round(successRate * 100.0) / 100.0)
@@ -265,18 +268,21 @@ public class ReportServiceImpl implements ReportService {
         int limit = Math.min(3, allData.size());
         for (int i = 0; i < limit; i++) {
             Object[] row = allData.get(i);
-            String email = (String) row[0];
+            Long userId = row[0] != null ? ((Number) row[0]).longValue() : null;
+            String email = (String) row[1];
+            String name = (String) row[2];  // ✅ Lấy name
             // Lấy APPROVED_COUNT từ report.status = 2
-            Long approvedCount = ((Number) row[1]).longValue();
-            Long totalCount = ((Number) row[2]).longValue();
-            LocalDateTime firstReport = (LocalDateTime) row[3];
-            LocalDateTime lastReport = (LocalDateTime) row[4];
+            Long approvedCount = ((Number) row[3]).longValue();
+            Long totalCount = ((Number) row[4]).longValue();
+            LocalDateTime firstReport = (LocalDateTime) row[5];
+            LocalDateTime lastReport = (LocalDateTime) row[6];
 
             double successRate = totalCount > 0 ? (approvedCount * 100.0 / totalCount) : 0.0;
 
             ReporterRankingResponseDTO dto = ReporterRankingResponseDTO.builder()
-                    .id((long) (i + 1))
+                    .id(userId != null ? userId : (long) (i + 1)) // Sử dụng userId thật
                     .email(email)
+                    .name(name != null ? name : "Unknown")  // ✅ Set name
                     .totalReports(Math.toIntExact(totalCount))
                     .approvedReports(Math.toIntExact(approvedCount))
                     .successRate(Math.round(successRate * 100.0) / 100.0)

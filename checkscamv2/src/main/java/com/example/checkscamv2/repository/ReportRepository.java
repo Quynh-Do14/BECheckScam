@@ -13,14 +13,17 @@ import java.util.List;
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
     @Query("""
-            SELECT r.emailAuthorReport,
+            SELECT u.id,
+                   r.emailAuthorReport,
+                   u.name,
                    SUM(CASE WHEN r.status = 2 THEN 1 ELSE 0 END) as approvedCount,
                    COUNT(r) as totalCount,
                    MIN(r.dateReport) as firstReport,
                    MAX(r.dateReport) as lastReport
             FROM Report r
+            LEFT JOIN User u ON r.emailAuthorReport = u.email
             WHERE r.emailAuthorReport IS NOT NULL
-            GROUP BY r.emailAuthorReport
+            GROUP BY u.id, r.emailAuthorReport, u.name
             HAVING COUNT(r) > 0
             ORDER BY SUM(CASE WHEN r.status = 2 THEN 1 ELSE 0 END) DESC
             """)
