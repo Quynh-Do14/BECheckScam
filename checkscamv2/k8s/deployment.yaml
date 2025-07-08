@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai6-be
+  labels:
+    app: ai6-be
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai6-be
+  template:
+    metadata:
+      labels:
+        app: ai6-be
+    spec:
+      containers:
+      - name: checkscamv2
+        image: your-registry/checkscamv2:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SERVER_PORT
+          value: "8080"
+        - name: DB_URL
+          value: "jdbc:mysql://103.57.221.26:3306/hlcfwrewhosting_check_scam?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf-8&useSSL=false"
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: password
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: jwt-secret
+        # Thêm các env vars khác từ .env
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 90
+          timeoutSeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai6-be
+  labels:
+    app: ai6-be
+spec:
+  selector:
+    app: ai6-be
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+type: Opaque
+stringData:
+  username: hlcfwrewhosting_check_scam
+  password: techbyteDev
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+type: Opaque
+stringData:
+  jwt-secret: OxGm3cuh+eGvHosY4JGGAOvCU6QzTQVyAw7crvtCilLqqWKV+YX/V0ucUfXWqPYCJXLcexH7/4BSnRH4qNVaBA==
