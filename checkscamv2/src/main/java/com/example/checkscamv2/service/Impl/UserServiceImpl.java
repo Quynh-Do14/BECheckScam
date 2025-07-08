@@ -120,4 +120,15 @@ public class UserServiceImpl implements UserService {
             this.userRepository.save(currentUser);
         }
     }
+    
+    // ✅ Implementation các methods mới
+    @Override
+    public List<User> fetchUsersByRole(RoleName roleName) {
+        return this.userRepository.findUsersByRoleName(roleName);
+    }
+    
+    @Override
+    public List<User> fetchCollaborators() {
+        return this.userRepository.findCollaborators();
+    }
 }
