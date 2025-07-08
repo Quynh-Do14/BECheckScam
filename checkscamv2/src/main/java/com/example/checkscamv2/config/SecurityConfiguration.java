@@ -83,19 +83,7 @@ public class SecurityConfiguration {
                 )
 
                 .cors(httpSecurityCorsConfigurer -> {
-                    CorsConfiguration configuration = new CorsConfiguration();
-//                    configuration.setAllowedOrigins(
-//                            Arrays.asList(
-//                                    "http://localhost:3000",
-//                                    "http://localhost:4173",
-//                                    "http://localhost:4200",
-//                                    "http://127.0.0.1:4200",
-//                                    "https://api-v1.ai6.vn",
-//                                    "https://ai6.vn",
-//                                    "https://www.ai6.vn"
-//                            )
-//                    );
-                    configuration.addAllowedOriginPattern("*");
+                    CorsConfiguration configuration = getCorsConfiguration();
                     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                     configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
                     configuration.setExposedHeaders(List.of("x-auth-token"));
@@ -109,6 +97,23 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
+    }
+
+    private static CorsConfiguration getCorsConfiguration() {
+        CorsConfiguration configuration = new CorsConfiguration();
+                    configuration.setAllowedOrigins(
+                            Arrays.asList(
+                                    "http://localhost:3000",
+                                    "http://localhost:4173",
+                                    "http://localhost:4200",
+                                    "http://127.0.0.1:4200",
+                                    "https://api-v1.ai6.vn",
+                                    "https://ai6.vn",
+                                    "https://www.ai6.vn"
+                            )
+                    );
+//        configuration.addAllowedOriginPattern("*");
+        return configuration;
     }
 
     @Bean

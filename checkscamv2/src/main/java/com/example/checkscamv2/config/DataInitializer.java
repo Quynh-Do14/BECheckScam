@@ -27,23 +27,19 @@ public class DataInitializer {
 
         // Tạo các role nếu chưa tồn tại (USER, ADMIN, COLLAB)
         if (roleRepository.count() == 0) {
-            Role userRole = Role.builder().name(RoleName.USER).build(); // Thêm vai trò USER
+            Role userRole = Role.builder().name(RoleName.USER).build();
             Role adminRole = Role.builder().name(RoleName.ADMIN).build();
             Role collabRole = Role.builder().name(RoleName.COLLAB).build();
 
-            roleRepository.save(userRole); // Lưu USER role
+            roleRepository.save(userRole);
             roleRepository.save(adminRole);
             roleRepository.save(collabRole);
             System.out.println("Đã tạo các role USER, ADMIN và COLLAB.");
         }
 
-        // Tạo user admin và collab mặc định nếu chưa tồn tại
-        // Sẽ chỉ tạo nếu KHÔNG có user nào trong DB
         if (userRepository.count() == 0) {
-            // Lấy role ADMIN
-            // Đảm bảo findByName trả về Optional và xử lý nó
             Role adminRole = roleRepository.findByName(RoleName.ADMIN)
-                    .orElseThrow(() -> new RuntimeException("Error: ADMIN role not found in DB!")); // <-- SỬA Ở ĐÂY
+                    .orElseThrow(() -> new RuntimeException("Error: ADMIN role not found in DB!"));
 
             Set<Role> adminRoles = new HashSet<>();
             adminRoles.add(adminRole);
@@ -56,10 +52,8 @@ public class DataInitializer {
             userRepository.save(adminUser);
             System.out.println("Đã tạo tài khoản ADMIN mặc định.");
 
-            // Lấy role COLLAB
-            // Đảm bảo findByName trả về Optional và xử lý nó
             Role collabRole = roleRepository.findByName(RoleName.COLLAB)
-                    .orElseThrow(() -> new RuntimeException("Error: COLLAB role not found in DB!")); // <-- SỬA Ở ĐÂY
+                    .orElseThrow(() -> new RuntimeException("Error: COLLAB role not found in DB!"));
 
             Set<Role> collabRoles = new HashSet<>();
             collabRoles.add(collabRole);
