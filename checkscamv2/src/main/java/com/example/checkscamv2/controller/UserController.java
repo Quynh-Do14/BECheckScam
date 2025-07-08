@@ -9,6 +9,7 @@ import com.example.checkscamv2.dto.response.CheckScamResponse;
 import com.example.checkscamv2.dto.response.ProfileResponse;
 import com.example.checkscamv2.dto.response.UserProfilesResponse;
 import com.example.checkscamv2.entity.User;
+import com.example.checkscamv2.constant.RoleName;
 import com.example.checkscamv2.exception.IdInvalidException;
 import com.example.checkscamv2.service.ProfileService;
 import com.example.checkscamv2.service.UserService;
@@ -154,6 +155,31 @@ public class UserController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Lỗi khi lấy thông tin user kèm profile: " + e.getMessage());
+        }
+    }
+    
+    // ✅ API mới: Lấy danh sách cộng tác viên
+    @GetMapping("/collaborators")
+    public ResponseEntity<?> getCollaborators() {
+        try {
+            List<User> collaborators = userService.fetchCollaborators();
+            return ResponseEntity.ok(collaborators);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi khi lấy danh sách cộng tác viên: " + e.getMessage());
+        }
+    }
+    
+    // ✅ API tổng quát: Lấy users theo role
+    @GetMapping("/by-role/{roleName}")
+    public ResponseEntity<?> getUsersByRole(@PathVariable String roleName) {
+        try {
+            RoleName role = RoleName.valueOf(roleName.toUpperCase());
+            List<User> users = userService.fetchUsersByRole(role);
+            return ResponseEntity.ok(users);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Role không hợp lệ: " + roleName + ". Các role hợp lệ: USER, ADMIN, COLLAB");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi khi lấy users theo role: " + e.getMessage());
         }
     }
 }
