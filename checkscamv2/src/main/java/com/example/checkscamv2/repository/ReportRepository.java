@@ -12,21 +12,40 @@ import java.util.List;
 @Repository
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
-    @Query("""
+    // OLD JPQL - CAUSES COLLATION ERROR
+    // @Query("""
+    //         SELECT u.id,
+    //                r.emailAuthorReport,
+    //                u.name,
+    //                SUM(CASE WHEN r.status = 2 THEN 1 ELSE 0 END) as approvedCount,
+    //                COUNT(r) as totalCount,
+    //                MIN(r.dateReport) as firstReport,
+    //                MAX(r.dateReport) as lastReport
+    //         FROM Report r
+    //         LEFT JOIN User u ON r.emailAuthorReport = u.email
+    //         WHERE r.emailAuthorReport IS NOT NULL
+    //         GROUP BY u.id, r.emailAuthorReport, u.name
+    //         HAVING COUNT(r) > 0
+    //         ORDER BY SUM(CASE WHEN r.status = 2 THEN 1 ELSE 0 END) DESC
+    //         """)
+    // List<Object[]> findAllReporterRankingData();
+
+    // NEW NATIVE QUERY - FIXES COLLATION ISSUE
+    @Query(value = """
             SELECT u.id,
-                   r.emailAuthorReport,
+                   r.email_author_report,
                    u.name,
-                   SUM(CASE WHEN r.status = 2 THEN 1 ELSE 0 END) as approvedCount,
-                   COUNT(r) as totalCount,
-                   MIN(r.dateReport) as firstReport,
-                   MAX(r.dateReport) as lastReport
-            FROM Report r
-            LEFT JOIN User u ON r.emailAuthorReport = u.email
-            WHERE r.emailAuthorReport IS NOT NULL
-            GROUP BY u.id, r.emailAuthorReport, u.name
-            HAVING COUNT(r) > 0
-            ORDER BY SUM(CASE WHEN r.status = 2 THEN 1 ELSE 0 END) DESC
-            """)
+                   SUM(CASE WHEN r.status = 2 THEN 1 ELSE 0 END) as approved_count,
+                   COUNT(r.id) as total_count,
+                   MIN(r.date_report) as first_report,
+                   MAX(r.date_report) as last_report
+            FROM report r
+            LEFT JOIN users u ON r.email_author_report COLLATE utf8mb4_unicode_ci = u.email COLLATE utf8mb4_unicode_ci
+            WHERE r.email_author_report IS NOT NULL
+            GROUP BY u.id, r.email_author_report, u.name
+            HAVING COUNT(r.id) > 0
+            ORDER BY approved_count DESC
+            """, nativeQuery = true)
     List<Object[]> findAllReporterRankingData();
 
     @Query("""
@@ -52,6 +71,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     @Query("SELECT COUNT(r) FROM Report r WHERE r.status = :status")
     long countByStatus(@Param("status") Integer status);
 
+    // OLD JPQL VERSION - NO JOIN SO IT SHOULD WORK
     @Query("""
             SELECT r.emailAuthorReport,
                    SUM(CASE WHEN r.status = 2 THEN 1 ELSE 0 END) as approvedCount,
