@@ -42,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,6 +64,22 @@ public class ReportServiceImpl implements ReportService {
     private final PhoneScamStatsRepository phoneScamStatsRepository;
     private final BankScamStatsRepository bankScamStatsRepository;
     private final UrlScamStatsRepository urlScamStatsRepository;
+
+    /**
+     * Convert database result to LocalDateTime (handles both Timestamp and LocalDateTime)
+     */
+    private LocalDateTime convertToLocalDateTime(Object dateTimeObj) {
+        if (dateTimeObj == null) {
+            return null;
+        }
+        if (dateTimeObj instanceof Timestamp) {
+            return ((Timestamp) dateTimeObj).toLocalDateTime();
+        }
+        if (dateTimeObj instanceof LocalDateTime) {
+            return (LocalDateTime) dateTimeObj;
+        }
+        throw new IllegalArgumentException("Unsupported date type: " + dateTimeObj.getClass());
+    }
 
     @Transactional
     @Override
@@ -232,8 +249,9 @@ public class ReportServiceImpl implements ReportService {
             // Lấy APPROVED_COUNT từ report.status = 2
             Long approvedCount = ((Number) row[3]).longValue();
             Long totalCount = ((Number) row[4]).longValue();
-            LocalDateTime firstReport = (LocalDateTime) row[5];
-            LocalDateTime lastReport = (LocalDateTime) row[6];
+            // Fix: Convert database result to LocalDateTime
+            LocalDateTime firstReport = convertToLocalDateTime(row[5]);
+            LocalDateTime lastReport = convertToLocalDateTime(row[6]);
 
             double successRate = totalCount > 0 ? (approvedCount * 100.0 / totalCount) : 0.0;
 
@@ -274,8 +292,9 @@ public class ReportServiceImpl implements ReportService {
             // Lấy APPROVED_COUNT từ report.status = 2
             Long approvedCount = ((Number) row[3]).longValue();
             Long totalCount = ((Number) row[4]).longValue();
-            LocalDateTime firstReport = (LocalDateTime) row[5];
-            LocalDateTime lastReport = (LocalDateTime) row[6];
+            // Fix: Convert database result to LocalDateTime
+            LocalDateTime firstReport = convertToLocalDateTime(row[5]);
+            LocalDateTime lastReport = convertToLocalDateTime(row[6]);
 
             double successRate = totalCount > 0 ? (approvedCount * 100.0 / totalCount) : 0.0;
 
