@@ -1,7 +1,5 @@
 package com.example.checkscamv2.controller;
 
-// WEBSOCKET DISABLED - Comment out all WebSocket related code
-/*
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,4 +30,3 @@ public class WebSocketTestController {
         return ResponseEntity.ok(response);
     }
 }
-*/

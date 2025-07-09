@@ -1,7 +1,6 @@
 package com.example.checkscamv2.config;
 
-// WEBSOCKET DISABLED - Comment out all WebSocket related code
-/*
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -33,7 +32,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         String[] origins = allowedOrigins.split(",");
-        
+
         // Main WebSocket endpoint with SockJS fallback
         registry.addEndpoint("/ws")
                 .setAllowedOrigins(origins)
@@ -43,10 +42,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setStreamBytesLimit(512 * 1024)
                 .setHttpMessageCacheSize(1000)
                 .setClientLibraryUrl(null);   // ← Tắt cookie requirement
-        
+
         // Simple WebSocket endpoint (without SockJS) for debugging
         registry.addEndpoint("/ws-simple")
                 .setAllowedOrigins(origins);
     }
 }
-*/
+

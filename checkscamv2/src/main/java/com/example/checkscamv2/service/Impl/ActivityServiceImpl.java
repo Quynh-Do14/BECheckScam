@@ -8,8 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-// WEBSOCKET DISABLED
-// import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -22,9 +21,8 @@ public class ActivityServiceImpl implements ActivityService {
     @Autowired
     private ActivityRepository activityRepository;
     
-    // WEBSOCKET DISABLED
-    // @Autowired(required = false)
-    // private SimpMessagingTemplate messagingTemplate;
+    @Autowired(required = false)
+    private SimpMessagingTemplate messagingTemplate;
     
     @Override
     public List<Activity> getActivities(int limit, int offset, String actionType) {
@@ -65,8 +63,6 @@ public class ActivityServiceImpl implements ActivityService {
         Activity savedActivity = activityRepository.save(activity);
         System.out.println("Activity saved successfully with ID: " + savedActivity.getId());
         
-        // WEBSOCKET DISABLED - Comment out WebSocket broadcasting
-        /*
         if (messagingTemplate != null) {
             try {
                 System.out.println("Broadcasting via WebSocket...");
@@ -79,8 +75,6 @@ public class ActivityServiceImpl implements ActivityService {
         } else {
             System.out.println("WebSocket messagingTemplate is null - skipping broadcast");
         }
-        */
-        System.out.println("WebSocket is disabled - skipping broadcast");
         
         return savedActivity;
     }
