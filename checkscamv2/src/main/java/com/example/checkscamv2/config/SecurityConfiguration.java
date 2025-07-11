@@ -48,7 +48,8 @@ public class SecurityConfiguration {
             "/sockjs-node/**",
             "/topic/**",
             "/app/**",
-            "/api/v1/activities/**"
+            "/api/v1/activities/**",
+            "uploads/**"
     };
 
     private static final String[] PUBLIC_GET_ENDPOINTS = {
@@ -96,7 +97,7 @@ public class SecurityConfiguration {
                     return token;
                 }
 
-                System.out.println(" PROTECTED ENDPOINT: " + method + " " + uri + " → KHÔNG CÓ THẺ");
+
                 return null;
             }
         };
@@ -147,6 +148,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/v1/check-scam/**").permitAll()
                         .requestMatchers("/api/v1/ranking/**").permitAll()
                         .requestMatchers("/api/v1/activities/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/ws/**", "/ws-simple/**", "/sockjs-node/**", "/topic/**", "/app/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/news/**").permitAll()
