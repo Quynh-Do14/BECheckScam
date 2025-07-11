@@ -21,82 +21,6 @@ public class RankingController {
     private final ScamStatsService scamStatsService;
     private final ReportDetailRepository reportDetailRepository;
 
-    @GetMapping("/test-simple")
-    public ResponseEntity<String> testSimple() {
-        return ResponseEntity.ok("API is working!");
-    }
-
-    @GetMapping("/test-db")
-    public ResponseEntity<ResponseObject> testDatabase() {
-        try {
-            // Đếm tổng số records trong database
-            long totalReportDetails = reportDetailRepository.count();
-            
-            // Lấy vài records đầu tiên
-            var sampleData = reportDetailRepository.findAll().stream()
-                .limit(5)
-                .map(rd -> Map.of(
-                    "id", rd.getId(),
-                    "info", rd.getInfo(),
-                    "type", rd.getType(),
-                    "description", rd.getDescription() != null ? rd.getDescription() : "null"
-                ))
-                .collect(java.util.stream.Collectors.toList());
-            
-            var result = Map.of(
-                "totalRecords", totalReportDetails,
-                "sampleData", sampleData
-            );
-            
-            return ResponseEntity.ok(
-                ResponseObject.builder()
-                    .status(HttpStatus.OK)
-                    .message("Database test successful")
-                    .data(result)
-                    .build()
-            );
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ResponseObject.builder()
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .message("Database test failed: " + e.getMessage())
-                    .data(null)
-                    .build());
-        }
-    }
-
-    @GetMapping("/test-data/{info}")
-    public ResponseEntity<ResponseObject> testData(@PathVariable String info) {
-        try {
-            // Test các loại query khác nhau
-            var phoneReports = reportDetailRepository.findByInfoAndType(info, 1);
-            var bankReports = reportDetailRepository.findByInfoAndType(info, 2);
-            var urlReports = reportDetailRepository.findByInfoAndType(info, 3);
-            
-            var testResult = Map.of(
-                "info", info,
-                "phoneReports", phoneReports.size(),
-                "bankReports", bankReports.size(),
-                "urlReports", urlReports.size(),
-                "totalReports", phoneReports.size() + bankReports.size() + urlReports.size()
-            );
-            
-            return ResponseEntity.ok(
-                ResponseObject.builder()
-                    .status(HttpStatus.OK)
-                    .message("Test data retrieved")
-                    .data(testResult)
-                    .build()
-            );
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ResponseObject.builder()
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .message("Error testing data: " + e.getMessage())
-                    .data(null)
-                    .build());
-        }
-    }
 
     @GetMapping("/top-phones")
     public ResponseEntity<ResponseObject> getTopPhones() {
@@ -174,7 +98,7 @@ public class RankingController {
     @GetMapping("/subject-detail/{info}")
     public ResponseEntity<ResponseObject> getSubjectDetail(
             @PathVariable String info,
-            @RequestParam(required = false, defaultValue = "1") Integer type) {
+            @RequestParam Integer type) {
         try {
             SubjectDetailResponseDTO subjectDetail = scamStatsService.getSubjectDetail(info, type);
             if (subjectDetail == null) {

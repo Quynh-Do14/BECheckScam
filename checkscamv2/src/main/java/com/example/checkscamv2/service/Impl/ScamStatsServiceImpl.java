@@ -29,21 +29,7 @@ public class ScamStatsServiceImpl implements ScamStatsService {
     private final BankScamRepository bankScamRepository;
     private final UrlScamRepository urlScamRepository;
 
-    @Override
-    public Object getPhoneScamStatsInfo(String info) {
-        return null;
-    }
 
-    @Override
-    public Object getBankScamStatsInfo(String info) {
-        return null;
-    }
-
-    @Override
-    public Object getUrlScamStatsInfo(String info) {
-        return null;
-    }
-    
     @Override
     public List<TopScamItemResponseDTO> getTopPhoneScams() {
         return phoneRepository.getTopPhonesByViews();
