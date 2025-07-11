@@ -12,7 +12,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Serve static files từ thư mục uploads
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:uploads/", "file:./uploads/", "classpath:/static/uploads/");
+                .addResourceLocations("file:/app/uploads/", "file:uploads/", "file:./uploads/");
         
         // Serve static files từ thư mục hiện tại
         registry.addResourceHandler("/**")
