@@ -21,8 +21,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ScamStatsServiceImpl implements ScamStatsService {
-    
-    // ===== DEPENDENCIES =====
+
+    // ============================= CẤU HÌNH VÀ DEPENDENCIES =============================
+
+    // Repository dependencies
     private final UrlScamStatsRepository urlRepository;
     private final PhoneScamStatsRepository phoneRepository;
     private final BankScamStatsRepository bankRepository;
@@ -33,43 +35,47 @@ public class ScamStatsServiceImpl implements ScamStatsService {
     private final PhoneScamRepository phoneScamRepository;
     private final BankScamRepository bankScamRepository;
     private final UrlScamRepository urlScamRepository;
-    
-    // ===== CONSTANTS =====
-    private static final String BASE_URL = "http://localhost:8080";
+
+    // Các hằng số cấu hình
+
     private static final String DEFAULT_REPORTER_LOCATION = "Việt Nam";
     private static final Pattern MONEY_PATTERN = Pattern.compile("[^0-9]");
     private static final int RELATED_SUBJECTS_LIMIT = 3;
-    
-    // Default names
+
+    // Tên mặc định cho các loại đối tượng
     private static final String DEFAULT_PHONE_NAME = "Số điện thoại nghi vấn";
     private static final String DEFAULT_BANK_NAME = "Tài khoản ngân hàng nghi vấn";
     private static final String DEFAULT_URL_NAME = "Website nghi vấn";
     private static final String DEFAULT_UNKNOWN_NAME = "Đối tượng không xác định";
-    
-    // Status messages
+
+    // Trạng thái và thông báo
     private static final Map<Integer, String> STATUS_MESSAGES = Map.of(
-        1, "Đã xác minh",
-        2, "Đã từ chối"
+            1, "Đã xác minh",
+            2, "Đã từ chối"
     );
     private static final String DEFAULT_STATUS = "Đang xử lý";
-    
-    // Risk levels
+
+    // Mức độ rủi ro
     private static final String RISK_LOW = "low";
     private static final String RISK_MEDIUM = "medium";
     private static final String RISK_HIGH = "high";
-    
-    // Fallback descriptions
+
+    // Mô tả dự phòng cho từng loại
     private static final Map<Integer, String> FALLBACK_DESCRIPTIONS = Map.of(
-        1, "Đây là số điện thoại được ghi nhận trong hệ thống nhưng chưa có báo cáo chi tiết từ người dùng.",
-        2, "Đây là tài khoản ngân hàng được ghi nhận trong hệ thống nhưng chưa có báo cáo chi tiết từ người dùng.",
-        3, "Đây là website được ghi nhận trong hệ thống nhưng chưa có báo cáo chi tiết từ người dùng."
+            1, "Đây là số điện thoại được ghi nhận trong hệ thống nhưng chưa có báo cáo chi tiết từ người dùng.",
+            2, "Đây là tài khoản ngân hàng được ghi nhận trong hệ thống nhưng chưa có báo cáo chi tiết từ người dùng.",
+            3, "Đây là website được ghi nhận trong hệ thống nhưng chưa có báo cáo chi tiết từ người dùng."
     );
-    
+
     private static final String DEFAULT_DESCRIPTION = "Thông tin chi tiết về đối tượng này đang được cập nhật.";
     private static final String DEFAULT_REPORT_DESCRIPTION = "Báo cáo lừa đảo";
-    
-    // ===== TOP SCAMS API =====
-    
+
+
+    // ============================= API CHÍNH - LẤY DANH SÁCH TOP =============================
+
+    /**
+     * Lấy danh sách top số điện thoại lừa đảo (theo lượt xem)
+     */
     @Override
     public List<TopScamItemResponseDTO> getTopPhoneScams() {
         log.debug("Getting top phone scams");
@@ -80,7 +86,10 @@ public class ScamStatsServiceImpl implements ScamStatsService {
             return Collections.emptyList();
         }
     }
-    
+
+    /**
+     * Lấy danh sách top tài khoản ngân hàng lừa đảo (theo lượt xem)
+     */
     @Override
     public List<TopScamItemResponseDTO> getTopBankScams() {
         log.debug("Getting top bank scams");
@@ -91,7 +100,10 @@ public class ScamStatsServiceImpl implements ScamStatsService {
             return Collections.emptyList();
         }
     }
-    
+
+    /**
+     * Lấy danh sách top website lừa đảo (theo lượt xem)
+     */
     @Override
     public List<TopScamItemResponseDTO> getTopUrlScams() {
         log.debug("Getting top URL scams");
@@ -102,81 +114,158 @@ public class ScamStatsServiceImpl implements ScamStatsService {
             return Collections.emptyList();
         }
     }
-    
-    // ===== VIEW COUNT INCREMENT API =====
-    
+
+
+    // ============================= API CHÍNH - TĂNG LƯỢT XEM =============================
+
+    /**
+     * Tăng lượt xem cho số điện thoại
+     */
     @Override
     @Transactional
     public void incrementPhoneViewCount(String phoneNumber) {
         log.info("Incrementing view count for phone: {}", phoneNumber);
-        
+
         try {
             phoneRepository.findByPhoneNumber(phoneNumber)
-                .ifPresentOrElse(
-                    this::incrementExistingPhoneStats,
-                    () -> createNewPhoneStats(phoneNumber)
-                );
+                    .ifPresentOrElse(
+                            this::incrementExistingPhoneStats,
+                            () -> createNewPhoneStats(phoneNumber)
+                    );
         } catch (Exception e) {
             log.error("Error incrementing phone view count for {}: {}", phoneNumber, e.getMessage(), e);
         }
     }
-    
+
+    /**
+     * Tăng lượt xem cho tài khoản ngân hàng
+     */
     @Override
     @Transactional
     public void incrementBankViewCount(String bankAccount) {
         log.info("Incrementing view count for bank account: {}", bankAccount);
-        
+
         try {
             bankRepository.findByBankAccount(bankAccount)
-                .ifPresentOrElse(
-                    this::incrementExistingBankStats,
-                    () -> log.warn("Bank account not found in stats: {}", bankAccount)
-                );
+                    .ifPresentOrElse(
+                            this::incrementExistingBankStats,
+                            () -> log.warn("Bank account not found in stats: {}", bankAccount)
+                    );
         } catch (Exception e) {
             log.error("Error incrementing bank view count for {}: {}", bankAccount, e.getMessage(), e);
         }
     }
-    
+
+    /**
+     * Tăng lượt xem cho URL
+     */
     @Override
     @Transactional
     public void incrementUrlViewCount(String url) {
         log.info("Incrementing view count for URL: {}", url);
-        
+
         try {
             urlRepository.findByUrl(url)
-                .ifPresentOrElse(
-                    this::incrementExistingUrlStats,
-                    () -> log.warn("URL not found in stats: {}", url)
-                );
+                    .ifPresentOrElse(
+                            this::incrementExistingUrlStats,
+                            () -> log.warn("URL not found in stats: {}", url)
+                    );
         } catch (Exception e) {
             log.error("Error incrementing URL view count for {}: {}", url, e.getMessage(), e);
         }
     }
-    
-    // ===== SUBJECT DETAIL API =====
-    
+
+
+    // ============================= API CHÍNH - CHI TIẾT ĐỐI TƯỢNG =============================
+
+    /**
+     * Lấy thông tin chi tiết của một đối tượng (phone/bank/url)
+     * @param info - thông tin đối tượng (số phone, tài khoản bank, url)
+     * @param type - loại đối tượng (1=phone, 2=bank, 3=url)
+     */
     @Override
     public SubjectDetailResponseDTO getSubjectDetail(String info, Integer type) {
         log.info("Getting subject detail for info={}, type={}", info, type);
-        
+
         try {
+            // Bước 1: Kiểm tra dữ liệu đầu vào
             validateInput(info, type);
-            
+
+            // Bước 2: Thử build response chi tiết (có báo cáo)
             return buildDetailedResponse(info, type)
-                .or(() -> buildFallbackResponse(info, type))
-                .orElseGet(() -> {
-                    log.warn("No data found for subject: {} type: {}", info, type);
-                    return null;
-                });
-                
+                    // Bước 3: Nếu không có, dùng response dự phòng (chỉ có thông tin cơ bản)
+                    .or(() -> buildFallbackResponse(info, type))
+                    // Bước 4: Nếu vẫn không có gì, trả về null
+                    .orElseGet(() -> {
+                        log.warn("No data found for subject: {} type: {}", info, type);
+                        return null;
+                    });
+
         } catch (Exception e) {
             log.error("Error getting subject detail for info={}, type={}: {}", info, type, e.getMessage(), e);
             return null;
         }
     }
-    
-    // ===== PRIVATE HELPER METHODS =====
-    
+
+
+    // ============================= XỬ LÝ TĂNG LƯỢT XEM =============================
+
+    /**
+     * Tăng lượt xem cho thống kê phone đã tồn tại
+     */
+    private void incrementExistingPhoneStats(PhoneScamStats stats) {
+        stats.setViewCount(stats.getViewCount() + 1);
+        phoneRepository.save(stats);
+        log.debug("Incremented existing phone stats for: {}",
+                stats.getPhoneScam() != null ? stats.getPhoneScam().getPhoneNumber() : "unknown");
+    }
+
+    /**
+     * Tăng lượt xem cho thống kê bank đã tồn tại
+     */
+    private void incrementExistingBankStats(BankScamStats stats) {
+        stats.setViewCount(stats.getViewCount() + 1);
+        bankRepository.save(stats);
+        log.debug("Incremented existing bank stats for: {}",
+                stats.getBankScam() != null ? stats.getBankScam().getBankAccount() : "unknown");
+    }
+
+    /**
+     * Tăng lượt xem cho thống kê URL đã tồn tại
+     */
+    private void incrementExistingUrlStats(UrlScamStats stats) {
+        stats.setViewCount(stats.getViewCount() + 1);
+        urlRepository.save(stats);
+        log.debug("Incremented existing URL stats for: {}",
+                stats.getUrlScam() != null ? stats.getUrlScam().getUrl() : "unknown");
+    }
+
+    /**
+     * Tạo thống kê mới cho phone (nếu chưa tồn tại)
+     */
+    private void createNewPhoneStats(String phoneNumber) {
+        phoneScamRepository.findByPhoneNumber(phoneNumber)
+                .ifPresentOrElse(
+                        phoneScam -> {
+                            PhoneScamStats newStats = PhoneScamStats.builder()
+                                    .id(phoneScam.getId())
+                                    .phoneScam(phoneScam)
+                                    .verifiedCount(0)
+                                    .viewCount(1)
+                                    .build();
+                            phoneRepository.save(newStats);
+                            log.debug("Created new phone stats for: {}", phoneNumber);
+                        },
+                        () -> log.warn("Phone scam not found when creating stats: {}", phoneNumber)
+                );
+    }
+
+
+    // ============================= XỬ LÝ RESPONSE CHI TIẾT =============================
+
+    /**
+     * Kiểm tra tính hợp lệ của dữ liệu đầu vào
+     */
     private void validateInput(String info, Integer type) {
         if (!StringUtils.hasText(info)) {
             throw new IllegalArgumentException("Subject info cannot be empty");
@@ -188,40 +277,47 @@ public class ScamStatsServiceImpl implements ScamStatsService {
             throw new IllegalArgumentException("Subject info too long: " + info.length());
         }
     }
-    
-    // ===== DETAILED RESPONSE BUILDING =====
-    
+
+    /**
+     * Build response chi tiết (khi có báo cáo từ người dùng)
+     */
     private Optional<SubjectDetailResponseDTO> buildDetailedResponse(String info, Integer type) {
+        // Tìm các báo cáo chi tiết cho đối tượng này
         List<ReportDetail> reportDetails = reportDetailRepository.findByInfoAndType(info, type);
-        
+
         if (reportDetails.isEmpty()) {
             return Optional.empty();
         }
-        
-        // Aggregate data efficiently
+
+        // Thu thập tất cả dữ liệu liên quan
         SubjectDataBundle dataBundle = aggregateSubjectData(info, type, reportDetails);
-        
-        // Build comprehensive response
+
+        // Tạo response đầy đủ
         SubjectDetailResponseDTO response = createDetailedResponse(dataBundle);
         return Optional.of(response);
     }
-    
+
+    /**
+     * Thu thập tất cả dữ liệu liên quan đến subject
+     */
     private SubjectDataBundle aggregateSubjectData(String info, Integer type, List<ReportDetail> reportDetails) {
-        // Extract report IDs efficiently using Set to avoid duplicates
+        // Lấy danh sách ID report (loại bỏ trùng lặp)
         Set<Long> reportIds = reportDetails.stream()
                 .map(rd -> rd.getReport().getId())
                 .collect(Collectors.toSet());
-        
-        // Convert Set to List for repository methods
+
         List<Long> reportIdsList = new ArrayList<>(reportIds);
-        
-        // Batch fetch related data
+
+        // Lấy dữ liệu liên quan một lần (batch fetch để tối ưu performance)
         List<Report> reports = reportRepository.findAllById(reportIdsList);
         List<Attachment> attachments = attachmentRepository.findByReportIdIn(reportIdsList);
-        
+
         return new SubjectDataBundle(info, type, reportDetails, reports, attachments);
     }
-    
+
+    /**
+     * Tạo response chi tiết từ dữ liệu đã thu thập
+     */
     private SubjectDetailResponseDTO createDetailedResponse(SubjectDataBundle data) {
         return SubjectDetailResponseDTO.builder()
                 .info(data.getInfo())
@@ -237,45 +333,61 @@ public class ScamStatsServiceImpl implements ScamStatsService {
                 .relatedSubjects(findRelatedSubjects(data.getInfo(), data.getType()))
                 .build();
     }
-    
-    // ===== FALLBACK RESPONSE BUILDING =====
-    
+
+
+    // ============================= XỬ LÝ RESPONSE DỰ PHÒNG =============================
+
+    /**
+     * Build response dự phòng (khi không có báo cáo chi tiết)
+     */
     private Optional<SubjectDetailResponseDTO> buildFallbackResponse(String info, Integer type) {
         return switch (type) {
-            case 1 -> buildPhoneFallback(info);
-            case 2 -> buildBankFallback(info);
-            case 3 -> buildUrlFallback(info);
+            case 1 -> buildPhoneFallback(info);       // Phone
+            case 2 -> buildBankFallback(info);        // Bank
+            case 3 -> buildUrlFallback(info);         // URL
             default -> Optional.empty();
         };
     }
-    
+
+    /**
+     * Response dự phòng cho số điện thoại
+     */
     private Optional<SubjectDetailResponseDTO> buildPhoneFallback(String phoneNumber) {
         return phoneScamRepository.findByPhoneNumber(phoneNumber)
                 .map(phoneScam -> createBasicResponse(
-                    phoneNumber, 1,
-                    resolvePhoneName(phoneScam),
-                    getPhoneStatsOrDefault(phoneNumber).getVerifiedCount()
+                        phoneNumber, 1,
+                        resolvePhoneName(phoneScam),
+                        getPhoneStatsOrDefault(phoneNumber).getVerifiedCount()
                 ));
     }
-    
+
+    /**
+     * Response dự phòng cho tài khoản ngân hàng
+     */
     private Optional<SubjectDetailResponseDTO> buildBankFallback(String bankAccount) {
         return bankScamRepository.findByBankAccount(bankAccount)
                 .map(bankScam -> createBasicResponse(
-                    bankAccount, 2,
-                    resolveBankName(bankScam),
-                    getBankStatsOrDefault(bankAccount).getVerifiedCount()
+                        bankAccount, 2,
+                        resolveBankName(bankScam),
+                        getBankStatsOrDefault(bankAccount).getVerifiedCount()
                 ));
     }
-    
+
+    /**
+     * Response dự phòng cho URL
+     */
     private Optional<SubjectDetailResponseDTO> buildUrlFallback(String url) {
         return urlScamRepository.findByUrl(url)
                 .map(urlScam -> createBasicResponse(
-                    url, 3,
-                    DEFAULT_URL_NAME,
-                    getUrlStatsOrDefault(url).getVerifiedCount()
+                        url, 3,
+                        DEFAULT_URL_NAME,
+                        getUrlStatsOrDefault(url).getVerifiedCount()
                 ));
     }
-    
+
+    /**
+     * Tạo response cơ bản (dùng cho fallback)
+     */
     private SubjectDetailResponseDTO createBasicResponse(String info, Integer type, String name, Integer reportCount) {
         return SubjectDetailResponseDTO.builder()
                 .info(info)
@@ -291,9 +403,13 @@ public class ScamStatsServiceImpl implements ScamStatsService {
                 .relatedSubjects(findRelatedSubjects(info, type))
                 .build();
     }
-    
-    // ===== UTILITY METHODS =====
-    
+
+
+    // ============================= HÀM TIỆN ÍCH - XỬ LÝ DỮ LIỆU =============================
+
+    /**
+     * Xác định tên hiển thị cho đối tượng
+     */
     private String resolveSubjectName(String info, Integer type) {
         return switch (type) {
             case 1 -> phoneScamRepository.findByPhoneNumber(info)
@@ -306,28 +422,37 @@ public class ScamStatsServiceImpl implements ScamStatsService {
             default -> DEFAULT_UNKNOWN_NAME;
         };
     }
-    
+
+    /**
+     * Xác định tên cho số điện thoại
+     */
     private String resolvePhoneName(PhoneScam phoneScam) {
-        return StringUtils.hasText(phoneScam.getOwnerName()) 
-                ? phoneScam.getOwnerName() 
+        return StringUtils.hasText(phoneScam.getOwnerName())
+                ? phoneScam.getOwnerName()
                 : DEFAULT_PHONE_NAME;
     }
-    
+
+    /**
+     * Xác định tên cho tài khoản ngân hàng
+     */
     private String resolveBankName(BankScam bankScam) {
         StringBuilder name = new StringBuilder();
-        
+
         if (StringUtils.hasText(bankScam.getBankName())) {
             name.append(bankScam.getBankName());
         }
-        
+
         if (StringUtils.hasText(bankScam.getNameAccount())) {
             if (name.length() > 0) name.append(" - ");
             name.append(bankScam.getNameAccount());
         }
-        
+
         return name.length() > 0 ? name.toString() : DEFAULT_BANK_NAME;
     }
-    
+
+    /**
+     * Lấy mô tả tốt nhất từ danh sách báo cáo
+     */
     private String extractBestDescription(List<ReportDetail> reportDetails) {
         return reportDetails.stream()
                 .map(ReportDetail::getDescription)
@@ -335,7 +460,10 @@ public class ScamStatsServiceImpl implements ScamStatsService {
                 .findFirst()
                 .orElse(DEFAULT_DESCRIPTION);
     }
-    
+
+    /**
+     * Tính tổng số tiền lừa đảo
+     */
     private long calculateTotalAmount(List<Report> reports) {
         return reports.stream()
                 .map(Report::getMoneyScam)
@@ -343,7 +471,10 @@ public class ScamStatsServiceImpl implements ScamStatsService {
                 .mapToLong(this::parseMoneyAmount)
                 .sum();
     }
-    
+
+    /**
+     * Chuyển đổi chuỗi tiền thành số
+     */
     private long parseMoneyAmount(String moneyString) {
         try {
             String numbersOnly = MONEY_PATTERN.matcher(moneyString).replaceAll("");
@@ -353,7 +484,10 @@ public class ScamStatsServiceImpl implements ScamStatsService {
             return 0L;
         }
     }
-    
+
+    /**
+     * Tìm ngày báo cáo mới nhất
+     */
     private LocalDateTime findLatestDate(List<Report> reports) {
         return reports.stream()
                 .map(Report::getDateReport)
@@ -361,14 +495,20 @@ public class ScamStatsServiceImpl implements ScamStatsService {
                 .max(Comparator.naturalOrder())
                 .orElse(null);
     }
-    
+
+    /**
+     * Đánh giá mức độ rủi ro dựa trên số lượng báo cáo
+     */
     private String assessRiskLevel(Integer reportCount) {
         if (reportCount == null || reportCount == 0) return RISK_LOW;
         if (reportCount >= 10) return RISK_HIGH;
         if (reportCount >= 3) return RISK_MEDIUM;
         return RISK_LOW;
     }
-    
+
+    /**
+     * Xử lý danh sách URL bằng chứng
+     */
     private List<String> processEvidenceUrls(List<Attachment> attachments) {
         return attachments.stream()
                 .map(Attachment::getUrl)
@@ -376,48 +516,63 @@ public class ScamStatsServiceImpl implements ScamStatsService {
                 .map(this::normalizeUrl)
                 .collect(Collectors.toList());
     }
-    
+
+    /**
+     * Chuẩn hóa URL (thêm base URL nếu cần)
+     */
     private String normalizeUrl(String url) {
         if (url.startsWith("http")) return url;
         String normalizedUrl = url.startsWith("/") ? url : "/" + url;
-        return BASE_URL + normalizedUrl;
+        return "" + normalizedUrl;
     }
-    
+
+    /**
+     * Chuyển đổi danh sách Report thành ReportItemDTO
+     */
     private List<SubjectDetailResponseDTO.ReportItemDTO> mapToReportItems(List<Report> reports) {
         return reports.stream()
                 .map(this::mapToReportItem)
                 .collect(Collectors.toList());
     }
-    
+
+    /**
+     * Chuyển đổi một Report thành ReportItemDTO
+     */
     private SubjectDetailResponseDTO.ReportItemDTO mapToReportItem(Report report) {
         return SubjectDetailResponseDTO.ReportItemDTO.builder()
                 .id(report.getId())
                 .date(report.getDateReport())
-                .description(StringUtils.hasText(report.getDescription()) 
-                        ? report.getDescription() 
+                .description(StringUtils.hasText(report.getDescription())
+                        ? report.getDescription()
                         : DEFAULT_REPORT_DESCRIPTION)
                 .amount(parseMoneyAmount(report.getMoneyScam()))
                 .reporterLocation(DEFAULT_REPORTER_LOCATION)
                 .status(STATUS_MESSAGES.getOrDefault(report.getStatus(), DEFAULT_STATUS))
                 .build();
     }
-    
+
+    /**
+     * Tìm các đối tượng liên quan
+     */
     private List<SubjectDetailResponseDTO.RelatedSubjectDTO> findRelatedSubjects(String info, Integer type) {
         try {
             List<TopScamItemResponseDTO> topItems = getTopItemsByType(type);
-            
+
             return topItems.stream()
-                    .filter(item -> !Objects.equals(item.getInfo(), info))
+                    .filter(item -> !Objects.equals(item.getInfo(), info))  // Loại bỏ chính nó
                     .limit(RELATED_SUBJECTS_LIMIT)
                     .map(item -> mapToRelatedSubject(item, type))
                     .collect(Collectors.toList());
-                    
+
         } catch (Exception e) {
             log.error("Error getting related subjects for info: {}, type: {}", info, type, e);
             return Collections.emptyList();
         }
     }
-    
+
+    /**
+     * Lấy danh sách top theo loại
+     */
     private List<TopScamItemResponseDTO> getTopItemsByType(Integer type) {
         return switch (type) {
             case 1 -> getTopPhoneScams();
@@ -426,7 +581,10 @@ public class ScamStatsServiceImpl implements ScamStatsService {
             default -> Collections.emptyList();
         };
     }
-    
+
+    /**
+     * Chuyển đổi TopScamItem thành RelatedSubject
+     */
     private SubjectDetailResponseDTO.RelatedSubjectDTO mapToRelatedSubject(TopScamItemResponseDTO item, Integer type) {
         return SubjectDetailResponseDTO.RelatedSubjectDTO.builder()
                 .info(item.getInfo())
@@ -435,49 +593,13 @@ public class ScamStatsServiceImpl implements ScamStatsService {
                 .riskLevel(item.getStatus())
                 .build();
     }
-    
-    // ===== VIEW COUNT INCREMENT HELPERS =====
-    
-    private void incrementExistingPhoneStats(PhoneScamStats stats) {
-        stats.setViewCount(stats.getViewCount() + 1);
-        phoneRepository.save(stats);
-        log.debug("Incremented existing phone stats for: {}", 
-                stats.getPhoneScam() != null ? stats.getPhoneScam().getPhoneNumber() : "unknown");
-    }
-    
-    private void incrementExistingBankStats(BankScamStats stats) {
-        stats.setViewCount(stats.getViewCount() + 1);
-        bankRepository.save(stats);
-        log.debug("Incremented existing bank stats for: {}", 
-                stats.getBankScam() != null ? stats.getBankScam().getBankAccount() : "unknown");
-    }
-    
-    private void incrementExistingUrlStats(UrlScamStats stats) {
-        stats.setViewCount(stats.getViewCount() + 1);
-        urlRepository.save(stats);
-        log.debug("Incremented existing URL stats for: {}", 
-                stats.getUrlScam() != null ? stats.getUrlScam().getUrl() : "unknown");
-    }
-    
-    private void createNewPhoneStats(String phoneNumber) {
-        phoneScamRepository.findByPhoneNumber(phoneNumber)
-                .ifPresentOrElse(
-                    phoneScam -> {
-                        PhoneScamStats newStats = PhoneScamStats.builder()
-                                .id(phoneScam.getId())
-                                .phoneScam(phoneScam)
-                                .verifiedCount(0)
-                                .viewCount(1)
-                                .build();
-                        phoneRepository.save(newStats);
-                        log.debug("Created new phone stats for: {}", phoneNumber);
-                    },
-                    () -> log.warn("Phone scam not found when creating stats: {}", phoneNumber)
-                );
-    }
-    
-    // ===== STATS GETTER HELPERS =====
-    
+
+
+    // ============================= HÀM TIỆN ÍCH - LẤY THỐNG KÊ =============================
+
+    /**
+     * Lấy thống kê phone hoặc tạo mặc định
+     */
     private PhoneScamStats getPhoneStatsOrDefault(String phoneNumber) {
         return phoneRepository.findByPhoneNumber(phoneNumber)
                 .orElse(PhoneScamStats.builder()
@@ -485,7 +607,10 @@ public class ScamStatsServiceImpl implements ScamStatsService {
                         .verifiedCount(0)
                         .build());
     }
-    
+
+    /**
+     * Lấy thống kê bank hoặc tạo mặc định
+     */
     private BankScamStats getBankStatsOrDefault(String bankAccount) {
         return bankRepository.findByBankAccount(bankAccount)
                 .orElse(BankScamStats.builder()
@@ -493,7 +618,10 @@ public class ScamStatsServiceImpl implements ScamStatsService {
                         .verifiedCount(0)
                         .build());
     }
-    
+
+    /**
+     * Lấy thống kê URL hoặc tạo mặc định
+     */
     private UrlScamStats getUrlStatsOrDefault(String url) {
         return urlRepository.findByUrl(url)
                 .orElse(UrlScamStats.builder()
@@ -501,111 +629,34 @@ public class ScamStatsServiceImpl implements ScamStatsService {
                         .verifiedCount(0)
                         .build());
     }
-    
-    // ===== LEGACY METHODS (for backward compatibility) =====
-    
+
+
+    // ============================= INNER CLASS - CONTAINER DỮ LIỆU =============================
+
     /**
-     * @deprecated Use resolveSubjectName instead
-     */
-    @Deprecated
-    private String getSubjectName(String info, Integer type) {
-        return resolveSubjectName(info, type);
-    }
-    
-    /**
-     * @deprecated Use extractBestDescription instead
-     */
-    @Deprecated
-    private String getSubjectDescription(List<ReportDetail> reportDetails) {
-        return extractBestDescription(reportDetails);
-    }
-    
-    /**
-     * @deprecated Use mapToReportItem instead
-     */
-    @Deprecated
-    private SubjectDetailResponseDTO.ReportItemDTO buildReportItem(Report report) {
-        return mapToReportItem(report);
-    }
-    
-    /**
-     * @deprecated Use STATUS_MESSAGES.getOrDefault instead
-     */
-    @Deprecated
-    private String getReportStatus(Integer status) {
-        return STATUS_MESSAGES.getOrDefault(status, DEFAULT_STATUS);
-    }
-    
-    /**
-     * @deprecated Use findRelatedSubjects instead
-     */
-    @Deprecated
-    private List<SubjectDetailResponseDTO.RelatedSubjectDTO> getRelatedSubjects(String info, Integer type) {
-        return findRelatedSubjects(info, type);
-    }
-    
-    /**
-     * @deprecated Use assessRiskLevel instead
-     */
-    @Deprecated
-    private String determineRiskLevel(Integer reportCount) {
-        return assessRiskLevel(reportCount);
-    }
-    
-    /**
-     * @deprecated Use buildFallbackResponse instead
-     */
-    @Deprecated
-    private SubjectDetailResponseDTO createFallbackResponse(String info, Integer type) {
-        return buildFallbackResponse(info, type).orElse(null);
-    }
-    
-    /**
-     * @deprecated Use buildPhoneFallback instead
-     */
-    @Deprecated
-    private SubjectDetailResponseDTO createPhoneFallbackResponse(String phoneNumber) {
-        return buildPhoneFallback(phoneNumber).orElse(null);
-    }
-    
-    /**
-     * @deprecated Use buildBankFallback instead
-     */
-    @Deprecated
-    private SubjectDetailResponseDTO createBankFallbackResponse(String bankAccount) {
-        return buildBankFallback(bankAccount).orElse(null);
-    }
-    
-    /**
-     * @deprecated Use buildUrlFallback instead
-     */
-    @Deprecated
-    private SubjectDetailResponseDTO createUrlFallbackResponse(String url) {
-        return buildUrlFallback(url).orElse(null);
-    }
-    
-    // ===== INNER DATA CLASS =====
-    
-    /**
-     * Internal data container for subject-related information
-     * Immutable and lightweight for better performance
+     * Container chứa tất cả dữ liệu liên quan đến một subject
+     * Immutable và lightweight để tối ưu hiệu suất
+     *
+     * Vai trò: Đóng gói dữ liệu để truyền giữa các method một cách an toàn
      */
     private static class SubjectDataBundle {
-        private final String info;
-        private final Integer type;
-        private final List<ReportDetail> reportDetails;
-        private final List<Report> reports;
-        private final List<Attachment> attachments;
-        
-        public SubjectDataBundle(String info, Integer type, List<ReportDetail> reportDetails, 
-                                List<Report> reports, List<Attachment> attachments) {
+        private final String info;                          // Thông tin đối tượng (phone/bank/url)
+        private final Integer type;                         // Loại đối tượng (1,2,3)
+        private final List<ReportDetail> reportDetails;    // Chi tiết báo cáo
+        private final List<Report> reports;                // Danh sách báo cáo
+        private final List<Attachment> attachments;        // File đính kèm
+
+        public SubjectDataBundle(String info, Integer type, List<ReportDetail> reportDetails,
+                                 List<Report> reports, List<Attachment> attachments) {
             this.info = info;
             this.type = type;
-            this.reportDetails = List.copyOf(reportDetails);  // Immutable copy
-            this.reports = List.copyOf(reports);              // Immutable copy
-            this.attachments = List.copyOf(attachments);      // Immutable copy
+            // Tạo bản sao bất biến để đảm bảo dữ liệu không thay đổi
+            this.reportDetails = List.copyOf(reportDetails);
+            this.reports = List.copyOf(reports);
+            this.attachments = List.copyOf(attachments);
         }
-        
+
+        // Getter methods - chỉ đọc, không thể thay đổi
         public String getInfo() { return info; }
         public Integer getType() { return type; }
         public List<ReportDetail> getReportDetails() { return reportDetails; }
