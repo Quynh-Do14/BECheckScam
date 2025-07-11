@@ -21,15 +21,15 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-
+import jakarta.servlet.http.HttpServletRequest;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -39,14 +39,89 @@ public class SecurityConfiguration {
     @Value("${checkscam.jwt.base64-secret}")
     private String jwtKey;
 
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/api/v1/auth/**",
+            "/api/v1/check-scam/**",
+            "/api/v1/ranking/**",
+            "/ws/**",
+            "/ws-simple/**",
+            "/sockjs-node/**",
+            "/topic/**",
+            "/app/**"
+    };
+
+    private static final String[] PUBLIC_GET_ENDPOINTS = {
+            "/api/v1/news/**",
+            "/api/v1/users/profiles/**",
+            "/api/v1/users/**",
+            "/api/v1/report/image/**",
+            "/api/v1/report/ranking/**",
+            "/api/v1/report/ranking"
+    };
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+
+    @Bean
+    public BearerTokenResolver smartBearerTokenResolver() {
+        return new BearerTokenResolver() {
+            @Override
+            public String resolve(HttpServletRequest request) {
+                String uri = request.getRequestURI();
+                String method = request.getMethod();
+
+                if (isPublicEndpoint(uri, method)) {
+                    return null; // Không extract JWT token
+                }
+
+                String authHeader = request.getHeader("Authorization");
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    String token = authHeader.substring(7);
+                    System.out.println("PROTECTED ENDPOINT: " + method + " " + uri + " → QUÉT THẺ: " +
+                            (token.length() > 20 ? token.substring(0, 20) + "..." : token));
+                    return token;
+                }
+
+                System.out.println(" PROTECTED ENDPOINT: " + method + " " + uri + " → KHÔNG CÓ THẺ");
+                return null;
+            }
+        };
+    }
+
+
+    private boolean isPublicEndpoint(String uri, String method) {
+        for (String pattern : PUBLIC_ENDPOINTS) {
+            if (matchesPattern(uri, pattern)) {
+                return true;
+            }
+        }
+
+        if ("GET".equalsIgnoreCase(method)) {
+            for (String pattern : PUBLIC_GET_ENDPOINTS) {
+                if (matchesPattern(uri, pattern)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+    private boolean matchesPattern(String uri, String pattern) {
+        if (pattern.endsWith("/**")) {
+            String prefix = pattern.substring(0, pattern.length() - 3);
+            return uri.startsWith(prefix);
+        }
+        return uri.equals(pattern);
     }
 
     @Bean
@@ -54,76 +129,64 @@ public class SecurityConfiguration {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(HttpMethod.GET, "/api/v1/news/**").permitAll()
-                        .requestMatchers("/api/v1/news/**").authenticated()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/check-scam/**").permitAll()
+                        .requestMatchers("/api/v1/ranking/**").permitAll()
+                        .requestMatchers("/ws/**", "/ws-simple/**", "/sockjs-node/**", "/topic/**", "/app/**").permitAll()
 
+                        .requestMatchers(HttpMethod.GET, "/api/v1/news/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/profiles/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/**").permitAll()
-                        .requestMatchers("/api/v1/users/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/report/image/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/report/ranking/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/report/ranking").permitAll()
 
-                        .requestMatchers(HttpMethod.GET,"/api/v1/report/image/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/v1/report/ranking/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/v1/report/ranking").permitAll()
+                        .requestMatchers("/api/v1/news/**").authenticated()
+                        .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/report/**").authenticated()
 
-                        .requestMatchers("/api/v1/auth/register").permitAll()
-                        .requestMatchers("/api/v1/auth/login").permitAll()
-                        .requestMatchers("/api/v1/auth/google/**").permitAll()
-
-                        .requestMatchers("/api/v1/check-scam/**").permitAll()
-
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/ws-simple/**").permitAll()
-                        .requestMatchers("/sockjs-node/**").permitAll()
-                        .requestMatchers("/topic/**").permitAll()
-                        .requestMatchers("/app/**").permitAll()
-
-                        .requestMatchers("/**").permitAll()
                         .anyRequest().authenticated()
                 )
-
-                .cors(httpSecurityCorsConfigurer -> {
-                    CorsConfiguration configuration = new CorsConfiguration();
-
-                    // Production origins - specific domains for security
-                    configuration.setAllowedOrigins(Arrays.asList(
-                            "http://localhost:3000",
-                            "http://localhost:4200",
-                            "http://127.0.0.1:4200",
-                            "https://localhost:4200",
-                            "https://ai6.vn",
-                            "https://www.ai6.vn"
-                    ));
-
-                    // Allow all necessary HTTP methods
-                    configuration.setAllowedMethods(Arrays.asList(
-                            "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
-                    ));
-
-                    // Allow all necessary headers
-                    configuration.setAllowedHeaders(Arrays.asList(
-                            "authorization", "content-type", "x-auth-token", "Accept",
-                            "Origin", "X-Requested-With", "Cache-Control"
-                    ));
-
-                    // Expose custom headers
-                    configuration.setExposedHeaders(List.of("x-auth-token"));
-
-                    // Enable credentials for authentication
-                    configuration.setAllowCredentials(true);
-
-                    // Cache preflight requests
-                    configuration.setMaxAge(3600L);
-
-                    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                    source.registerCorsConfiguration("/**", configuration);
-                    httpSecurityCorsConfigurer.configurationSource(source);
-                })
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .bearerTokenResolver(smartBearerTokenResolver())
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                )
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
+    }
+
+    @Bean
+    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:3000",
+                "http://localhost:4200",
+                "http://127.0.0.1:4200",
+                "https://localhost:4200",
+                "https://ai6.vn",
+                "https://www.ai6.vn"
+        ));
+
+        configuration.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
+
+        configuration.setAllowedHeaders(Arrays.asList(
+                "Authorization", "Content-Type", "Accept", "Origin",
+                "X-Requested-With", "Cache-Control", "x-auth-token"
+        ));
+
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "x-auth-token"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     @Bean
@@ -139,12 +202,15 @@ public class SecurityConfiguration {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(getSecretKey()).macAlgorithm(SecurityUtil.JWT_ALGORITHM).build();
+        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(getSecretKey())
+                .macAlgorithm(SecurityUtil.JWT_ALGORITHM).build();
+
         return token -> {
             try {
+                System.out.println(" Decoding JWT token...");
                 return jwtDecoder.decode(token);
             } catch (Exception e) {
-                System.out.println(">>> JWT error: " + e.getMessage());
+                System.out.println(" JWT decode error: " + e.getMessage());
                 throw e;
             }
         };
@@ -159,5 +225,4 @@ public class SecurityConfiguration {
         byte[] keyBytes = Base64.from(jwtKey).decode();
         return new SecretKeySpec(keyBytes, 0, keyBytes.length, SecurityUtil.JWT_ALGORITHM.getName());
     }
-
 }
