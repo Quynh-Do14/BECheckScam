@@ -158,6 +158,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v1/report/ranking/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/report/ranking").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/report/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/report/upload-image").permitAll()
 
                         .requestMatchers("/api/v1/news/**").authenticated()
                         .requestMatchers("/api/v1/users/**").authenticated()
