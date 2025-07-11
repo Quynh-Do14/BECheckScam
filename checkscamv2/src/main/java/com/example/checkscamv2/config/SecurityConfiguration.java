@@ -47,7 +47,8 @@ public class SecurityConfiguration {
             "/ws-simple/**",
             "/sockjs-node/**",
             "/topic/**",
-            "/app/**"
+            "/app/**",
+            "/api/v1/activities/**"
     };
 
     private static final String[] PUBLIC_GET_ENDPOINTS = {
@@ -56,7 +57,12 @@ public class SecurityConfiguration {
             "/api/v1/users/**",
             "/api/v1/report/image/**",
             "/api/v1/report/ranking/**",
-            "/api/v1/report/ranking"
+            "/api/v1/report/ranking",
+            "/api/v1/activities/**",
+    };
+
+    private static final String[] PUBLIC_POST_ENDPOINTS = {
+            "/api/v1/report/**"
     };
 
     @Bean
@@ -112,6 +118,14 @@ public class SecurityConfiguration {
             }
         }
 
+        if ("POST".equalsIgnoreCase(method)) {
+            for (String pattern : PUBLIC_POST_ENDPOINTS) {
+                if (matchesPattern(uri, pattern)) {
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
@@ -132,6 +146,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/check-scam/**").permitAll()
                         .requestMatchers("/api/v1/ranking/**").permitAll()
+                        .requestMatchers("/api/v1/activities/**").permitAll()
                         .requestMatchers("/ws/**", "/ws-simple/**", "/sockjs-node/**", "/topic/**", "/app/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/news/**").permitAll()
@@ -140,6 +155,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v1/report/image/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/report/ranking/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/report/ranking").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/report/**").permitAll()
 
                         .requestMatchers("/api/v1/news/**").authenticated()
                         .requestMatchers("/api/v1/users/**").authenticated()
