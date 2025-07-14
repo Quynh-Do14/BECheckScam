@@ -57,6 +57,7 @@ public class SecurityConfiguration {
             "/api/v1/users/profiles/**",
             "/api/v1/users/**",
             "/api/v1/report/image/**",
+            "/api/v1/ranking/subject-detail/**",
             "/api/v1/report/ranking/**",
             "/api/v1/report/ranking",
             "/api/v1/activities/**",
