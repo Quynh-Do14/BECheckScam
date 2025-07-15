@@ -29,9 +29,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 import java.util.List;
 import java.util.Map;
 
@@ -182,6 +187,54 @@ public class ReportController {
                     .message(localizationUtils.getLocalizedMessage(MessageKeys.ERROR_OCCURRED_DEFAULT, e.getMessage()))
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .build());
+        }
+    }
+
+    /**
+     * API upload 1 ảnh vào thư mục uploads (không gắn với report nào)
+     */
+    @PostMapping(value = "/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadImageToUploads(@RequestParam("file") MultipartFile file,
+                                                  @Value("${app.upload-dir:uploads}") String uploadDir) {
+        try {
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "File không được để trống"
+                ));
+            }
+            String originalName = file.getOriginalFilename();
+            if (originalName == null || !originalName.matches("(?i).*\\.(jpg|jpeg|png)$")) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Chỉ chấp nhận file ảnh .jpg, .jpeg, .png"
+                ));
+            }
+            if (file.getSize() > 10 * 1024 * 1024) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Kích thước file không được vượt quá 10MB"
+                ));
+            }
+            // Lưu file với tên gốc
+            String sanitizedName = Paths.get(originalName).getFileName().toString();
+            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Files.createDirectories(uploadPath);
+            Path target = uploadPath.resolve(sanitizedName);
+            file.transferTo(target);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Upload ảnh thành công",
+                    "fileName", sanitizedName,
+                    "originalName", originalName,
+                    "size", file.getSize(),
+                    "url", "/uploads/" + sanitizedName
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi upload ảnh: " + e.getMessage()
+            ));
         }
     }
 

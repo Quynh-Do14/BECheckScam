@@ -1,5 +1,7 @@
 package com.example.checkscamv2.config;
 
+// WEBSOCKET DISABLED - Comment out all WebSocket related code
+/*
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -47,3 +49,5 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setAllowedOrigins(origins);
     }
 }
+*/
+
