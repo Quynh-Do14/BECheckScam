@@ -89,6 +89,17 @@ spec:
             secretKeyRef:
               name: ai6-be-secret
               key: PHISHTANK_API_KEY
+                # Email credentials from Secret
+        - name: SPRING_MAIL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: ai6-be-secret
+              key: SPRING_MAIL_USERNAME
+        - name: SPRING_MAIL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ai6-be-secret
+              key: SPRING_MAIL_PASSWORD
         # All non-sensitive config from ConfigMap
         envFrom:
         - configMapRef:

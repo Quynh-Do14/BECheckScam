@@ -105,4 +105,8 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
             """)
     List<Object[]> findReportCountByYear();
 
+    // Count reports by user for forum service
+    @Query("SELECT COUNT(r) FROM Report r WHERE r.emailAuthorReport = :userEmail")
+    Long countByUser(@Param("userEmail") String userEmail);
+
 }
