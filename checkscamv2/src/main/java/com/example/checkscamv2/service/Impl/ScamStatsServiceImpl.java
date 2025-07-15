@@ -35,7 +35,7 @@ public class ScamStatsServiceImpl implements ScamStatsService {
     private final UrlScamRepository urlScamRepository;
 
     // ===== CONSTANTS =====
-    private static final String BASE_URL = "http://localhost:8080";
+    private static final String BASE_URL = "";
     private static final String DEFAULT_REPORTER_LOCATION = "Việt Nam";
     private static final Pattern MONEY_PATTERN = Pattern.compile("[^0-9]");
     private static final int RELATED_SUBJECTS_LIMIT = 3;

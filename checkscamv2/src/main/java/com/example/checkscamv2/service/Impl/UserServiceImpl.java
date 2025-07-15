@@ -118,6 +118,8 @@ public class UserServiceImpl implements UserService {
             User currentUser = currentUserOptional.get();
             currentUser.setRefreshToken(token);
             this.userRepository.save(currentUser);
+            // ✅ Log để kiểm tra user update
+            System.out.println("✅ Updated refresh token for user: " + email);
         }
     }
     
