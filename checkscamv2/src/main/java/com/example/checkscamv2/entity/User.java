@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -16,7 +17,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User extends BaseEntity { // Assuming BaseEntity handles id, createdAt, updatedAt etc.
+public class User extends BaseEntity {
 
     private String name;
 
@@ -45,4 +46,8 @@ public class User extends BaseEntity { // Assuming BaseEntity handles id, create
     @JsonManagedReference
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
+    
+    private Boolean isEmailVerified; // Mặc định sẽ là false khi tạo mới
+    private String emailVerificationToken;
+    private Instant emailVerificationTokenExpires;
 }
