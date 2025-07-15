@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +36,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResCreateUserDTO handleCreateUser(User user, String roleName) {
-        ResCreateUserDTO resCreateUserDTO = new ResCreateUserDTO();
+        // Gán isEmailVerified = false và token/expiry khi tạo người dùng ban đầu
+        user.setIsEmailVerified(false);
+        // Token và expiry sẽ được set trong AuthController trước khi gọi handleCreateUser
 
         Set<Role> roles = user.getRoles();
         if (roles == null || roles.isEmpty()) {
@@ -50,6 +53,9 @@ public class UserServiceImpl implements UserService {
         }
 
         user = userRepository.save(user);
+
+        ResCreateUserDTO resCreateUserDTO = new ResCreateUserDTO();
+
         resCreateUserDTO.setId(user.getId());
         resCreateUserDTO.setEmail(user.getEmail());
         resCreateUserDTO.setName(user.getName());
@@ -122,15 +128,36 @@ public class UserServiceImpl implements UserService {
             System.out.println("✅ Updated refresh token for user: " + email);
         }
     }
-    
-    // ✅ Implementation các methods mới
+
+    // Implementation các methods mới
     @Override
     public List<User> fetchUsersByRole(RoleName roleName) {
         return this.userRepository.findUsersByRoleName(roleName);
     }
-    
+
     @Override
     public List<User> fetchCollaborators() {
         return this.userRepository.findCollaborators();
+    }
+
+    @Override
+    public void updateEmailVerificationStatus(User user, String token, Instant expiry) {
+        user.setEmailVerificationToken(token);
+        user.setEmailVerificationTokenExpires(expiry);
+        user.setIsEmailVerified(false); // Đảm bảo trạng thái ban đầu là false
+        userRepository.save(user);
+    }
+
+    @Override
+    public Optional<User> findUserByEmailVerificationToken(String token) {
+        return userRepository.findByEmailVerificationToken(token);
+    }
+
+    @Override
+    public void setEmailVerified(User user) {
+        user.setIsEmailVerified(true);
+        user.setEmailVerificationToken(null); // Xóa token sau khi xác minh
+        user.setEmailVerificationTokenExpires(null); // Xóa thời gian hết hạn
+        userRepository.save(user);
     }
 }
