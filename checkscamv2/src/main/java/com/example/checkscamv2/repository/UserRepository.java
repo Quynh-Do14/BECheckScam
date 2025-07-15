@@ -17,12 +17,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findTop3ByOrderByCreatedAtDesc();
 
     List<User> findAllByOrderByIdDesc();
-    
-    // ✅ Thêm method mới: Lấy users có role cụ thể
+
+    // Thêm method mới: Lấy users có role cụ thể
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName ORDER BY u.createdAt DESC")
     List<User> findUsersByRoleName(RoleName roleName);
-    
-    // ✅ Method tiện ích: Lấy các cộng tác viên
+
+    // Method tiện ích: Lấy các cộng tác viên
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'COLLAB' ORDER BY u.createdAt DESC")
     List<User> findCollaborators();
+
+    // ✅ THÊM METHOD MỚI ĐỂ TÌM USER BẰNG TOKEN XÁC MINH
+    Optional<User> findByEmailVerificationToken(String token);
 }
