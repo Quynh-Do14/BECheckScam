@@ -60,19 +60,17 @@ public class ExternalUrlCheckServiceImpl implements ExternalUrlCheckService {
 
     @Override
     public List<ExternalUrlCheckResponse> checkUrlWithAllServices(String url) {
-        CompletableFuture<ExternalUrlCheckResponse> googleSafeBrowse = CompletableFuture.supplyAsync(() -> checkUrlWithGoogleSafeBrowse(url));
+//        CompletableFuture<ExternalUrlCheckResponse> googleSafeBrowse = CompletableFuture.supplyAsync(() -> checkUrlWithGoogleSafeBrowse(url));
         CompletableFuture<ExternalUrlCheckResponse> phishTank = CompletableFuture.supplyAsync(() -> checkUrlWithPhishTank(url));
-        // Đảm bảo dòng này không bị comment nếu bạn muốn sử dụng Google Web Risk
-        CompletableFuture<ExternalUrlCheckResponse> googleWebRisk = CompletableFuture.supplyAsync(() -> checkUrlWithGoogleWebRisk(url));
+        //tạm thời comment dòng này nhá, chưa mở thanh toán key nó log ra lỗi
+//        CompletableFuture<ExternalUrlCheckResponse> googleWebRisk = CompletableFuture.supplyAsync(() -> checkUrlWithGoogleWebRisk(url));
         CompletableFuture<ExternalUrlCheckResponse> virusTotal = CompletableFuture.supplyAsync(() -> checkUrlWithVirusTotal(url));
         CompletableFuture<ExternalUrlCheckResponse> urlScan = CompletableFuture.supplyAsync(() -> checkUrlWithUrlScan(url));
 
         // Đảm bảo tất cả các CompletableFuture được bao gồm trong allOf
-        return CompletableFuture.allOf(googleSafeBrowse, phishTank, googleWebRisk, virusTotal, urlScan)
+        return CompletableFuture.allOf(phishTank, virusTotal, urlScan)
                 .thenApply(v -> Arrays.asList(
-                        googleSafeBrowse.join(),
                         phishTank.join(),
-                        googleWebRisk.join(), // Thêm vào đây nếu bạn đã bỏ comment ở trên
                         virusTotal.join(),
                         urlScan.join()
                 )).join();
