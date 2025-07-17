@@ -18,7 +18,7 @@ import lombok.Setter;
 public class RegisterDTO {
     @NotBlank(message = "Tên không được để trống")
     @Size(min = 5, max = 20, message = "Tên chỉ được phép có từ 5 đến 20 ký tự")
-    @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "Tên không được chứa dấu cách hoặc ký tự đặc biệt")
+    @Pattern(regexp = "^[\\p{L} ]+$", message = "Tên không được chứa số hoặc ký tự đặc biệt (chỉ chấp nhận chữ cái và dấu cách).")
     private String name;
 
     @NotBlank(message = "Email không được để trống")

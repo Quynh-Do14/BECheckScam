@@ -24,6 +24,12 @@ COPY --from=build /app/target/*.jar app.jar
 # Tạo thư mục cho uploads và cache
 RUN mkdir -p uploads cache
 
+# Cài đặt Chromium cho Playwright Java
+RUN yum install -y wget \
+    && wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm \
+    && yum install -y ./google-chrome-stable_current_x86_64.rpm \
+    && rm google-chrome-stable_current_x86_64.rpm
+
 # Expose port
 EXPOSE 8080
 
