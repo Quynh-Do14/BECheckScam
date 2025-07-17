@@ -172,7 +172,6 @@ public class ForumController {
     }
 
     @PostMapping("/comments")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<ResponseObject> createComment(@Valid @RequestBody CreateForumCommentRequest request) {
         try {
             ForumCommentResponse comment = forumService.createComment(request);
@@ -191,7 +190,6 @@ public class ForumController {
     }
 
     @DeleteMapping("/comments/{id}")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<ResponseObject> deleteComment(@PathVariable Long id) {
         try {
             forumService.deleteComment(id);
@@ -210,7 +208,6 @@ public class ForumController {
 
     // Like endpoints
     @PostMapping("/posts/{postId}/like")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<ResponseObject> likePost(@PathVariable Long postId) {
         try {
             forumService.likePost(postId);
@@ -228,7 +225,6 @@ public class ForumController {
     }
 
     @DeleteMapping("/posts/{postId}/like")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<ResponseObject> unlikePost(@PathVariable Long postId) {
         try {
             forumService.unlikePost(postId);
@@ -246,7 +242,6 @@ public class ForumController {
     }
 
     @PostMapping("/comments/{commentId}/like")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<ResponseObject> likeComment(@PathVariable Long commentId) {
         try {
             forumService.likeComment(commentId);
@@ -264,7 +259,6 @@ public class ForumController {
     }
 
     @DeleteMapping("/comments/{commentId}/like")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<ResponseObject> unlikeComment(@PathVariable Long commentId) {
         try {
             forumService.unlikeComment(commentId);
@@ -332,7 +326,6 @@ public class ForumController {
 
     // File upload endpoint
     @PostMapping("/upload")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResponseObject> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
             String imageUrl = forumService.uploadImage(file);

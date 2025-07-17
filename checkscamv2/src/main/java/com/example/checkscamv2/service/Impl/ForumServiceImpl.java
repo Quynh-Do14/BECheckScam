@@ -17,6 +17,7 @@ import com.example.checkscamv2.repository.ForumPostRepository;
 import com.example.checkscamv2.repository.ReportRepository;
 import com.example.checkscamv2.repository.UserRepository;
 import com.example.checkscamv2.service.ForumService;
+import com.example.checkscamv2.service.ViewCountService;
 import com.example.checkscamv2.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,12 +50,11 @@ public class ForumServiceImpl implements ForumService {
     private final ForumLikeRepository forumLikeRepository;
     private final UserRepository userRepository;
     private final ReportRepository reportRepository;
+    private final ViewCountService viewCountService;
 
     @Value("${app.upload.forum-images:uploads/forum}")
     private String uploadDir;
 
-    @Value("${app.base-url:}")
-    private String baseUrl;
 
     // ✅ Cache user trong request scope để tránh multiple queries
     private static final ThreadLocal<User> currentUserCache = new ThreadLocal<>();
@@ -109,9 +109,6 @@ public class ForumServiceImpl implements ForumService {
         ForumPost post = forumPostRepository.findActiveById(id)
                 .orElseThrow(() -> new DataNotFoundException("Post not found with id: " + id));
         
-        // Increment view count
-        forumPostRepository.incrementViewCount(id);
-        
         ForumPostResponse response = convertToPostResponse(post, currentUser);
         
         // Load comments
@@ -119,6 +116,15 @@ public class ForumServiceImpl implements ForumService {
         response.setComments(comments.stream()
                 .map(comment -> convertToCommentResponse(comment, currentUser))
                 .collect(Collectors.toList()));
+        
+        // Increment view count after transaction completes using separate service
+        org.springframework.transaction.support.TransactionSynchronizationManager
+            .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    viewCountService.incrementPostViewCount(id);
+                }
+            });
         
         return response;
     }
@@ -399,7 +405,7 @@ public class ForumServiceImpl implements ForumService {
             Files.copy(file.getInputStream(), filePath);
 
             // Return URL
-            String imageUrl = baseUrl + "/" + uploadDir + "/" + filename;
+            String imageUrl =  "/" + uploadDir + "/" + filename;
             log.info("Uploaded forum image: {} - No user query needed", imageUrl);
             
             return imageUrl;
