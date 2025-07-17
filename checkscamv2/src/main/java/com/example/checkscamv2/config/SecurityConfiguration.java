@@ -64,8 +64,8 @@ public class SecurityConfiguration {
     };
 
     private static final String[] PUBLIC_POST_ENDPOINTS = {
-            "/api/v1/report/**"
-//            "api/v1/mistake/**"
+            "/api/v1/report/**",
+            "api/v1/mistake/**"
     };
 
     @Bean
@@ -160,7 +160,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v1/report/ranking/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/report/ranking").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/report/**").permitAll()
-//                        .requestMatchers(HttpMethod.POST, "/api/v1/mistake/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/mistake/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/report/upload-image").permitAll()
 
                         .requestMatchers("/api/v1/news/**").authenticated()
