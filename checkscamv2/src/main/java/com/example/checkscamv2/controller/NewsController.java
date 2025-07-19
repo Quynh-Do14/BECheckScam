@@ -1,6 +1,7 @@
 package com.example.checkscamv2.controller;
 
 import com.example.checkscamv2.component.LocalizationUtils;
+import com.example.checkscamv2.component.FileUtils;
 import com.example.checkscamv2.constant.MessageKeys;
 import com.example.checkscamv2.dto.request.NewsRequest;
 import com.example.checkscamv2.dto.response.ResponseObject;
@@ -39,6 +40,7 @@ public class NewsController {
     private final LocalizationUtils localizationUtils;
     private final ActivityService activityService;
     private final UserService userService;
+    private final FileUtils fileUtils;
 
     // GET all news
     @GetMapping
@@ -248,6 +250,103 @@ public class NewsController {
                     .message(localizationUtils.getLocalizedMessage(MessageKeys.ERROR_OCCURRED_DEFAULT, e.getMessage()))
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .build());
+        }
+    }
+
+    // ========== APIs UPLOAD ẢNH CHO CONTENT ==========
+    
+    /**
+     * Upload ảnh riêng lẻ để sử dụng trong content HTML của tin tức
+     * Khác với attachments, đây là để nhúng trực tiếp vào nội dung
+     */
+    @PostMapping(value = "/content-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> uploadContentImage(@RequestParam("image") MultipartFile image) {
+        try {
+            // Validation
+            if (image.isEmpty()) {
+                return ResponseEntity.badRequest().body(ResponseObject.builder()
+                        .message("Ảnh không được để trống")
+                        .status(HttpStatus.BAD_REQUEST)
+                        .build());
+            }
+            
+            if (image.getContentType() == null || !image.getContentType().startsWith("image/")) {
+                return ResponseEntity.badRequest().body(ResponseObject.builder()
+                        .message("File phải là hình ảnh")
+                        .status(HttpStatus.BAD_REQUEST)
+                        .build());
+            }
+            
+            if (image.getSize() > 5 * 1024 * 1024) { // 5MB cho ảnh content
+                return ResponseEntity.badRequest().body(ResponseObject.builder()
+                        .message("Kích thước ảnh vượt quá 5MB")
+                        .status(HttpStatus.BAD_REQUEST)
+                        .build());
+            }
+            
+            // Store image using existing FileUtils
+            String storedFileName = fileUtils.storeFile(image);
+            
+            // Chỉ trả về fileName, frontend tự ghép URL
+            Map<String, Object> data = new HashMap<>();
+            data.put("fileName", storedFileName);
+            
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message("Upload ảnh thành công")
+                    .status(HttpStatus.OK)
+                    .data(data)
+                    .build());
+                    
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message("Lỗi upload ảnh: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .build());
+        }
+    }
+
+    /**
+     * Upload nhiều ảnh cùng lúc để sử dụng trong content
+     */
+    @PostMapping(value = "/content-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> uploadMultipleContentImages(@RequestParam("images") List<MultipartFile> images) {
+        try {
+            List<Map<String, String>> uploadedImages = new java.util.ArrayList<>();
+            
+            for (MultipartFile image : images) {
+                if (!image.isEmpty() && image.getContentType() != null && image.getContentType().startsWith("image/")) {
+                    String fileName = fileUtils.storeFile(image);
+                    String imageUrl = "/api/v1/news/image/" + fileName;
+                    
+                    Map<String, String> imageInfo = new HashMap<>();
+                    imageInfo.put("fileName", fileName);
+                    imageInfo.put("url", imageUrl);
+                    imageInfo.put("originalName", image.getOriginalFilename() != null ? image.getOriginalFilename() : "unknown");
+                    imageInfo.put("htmlTag", String.format("<img src='%s' alt='%s' style='max-width: 100%%; height: auto;' />", 
+                                                   imageUrl, image.getOriginalFilename()));
+                    uploadedImages.add(imageInfo);
+                }
+            }
+            
+            Map<String, Object> data = new HashMap<>();
+            data.put("count", uploadedImages.size());
+            data.put("images", uploadedImages);
+            
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .message("Upload " + uploadedImages.size() + " ảnh thành công")
+                    .status(HttpStatus.OK)
+                    .data(data)
+                    .build());
+                    
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseObject.builder()
+                            .message("Lỗi upload ảnh: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .build());
         }
     }
 
