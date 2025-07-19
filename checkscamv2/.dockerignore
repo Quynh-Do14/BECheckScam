@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Build artifacts
+build/
+target/
+*.jar
+*.war
+
+# Logs
+logs/
+*.log
+
+# Cache
+cache/
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.temp
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# App-specific
+uploads/ 
