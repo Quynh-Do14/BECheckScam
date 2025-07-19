@@ -10,22 +10,41 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Serve static files từ thư mục uploads
+        // Serve static files từ thư mục uploads với cache headers
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:/app/uploads/", "file:uploads/", "file:./uploads/");
+                .addResourceLocations(
+                    "file:" + System.getProperty("user.dir") + "/uploads/",
+                    "file:uploads/",
+                    "file:./uploads/",
+                    "classpath:/static/uploads/"
+                )
+                .setCachePeriod(3600) // Cache 1 hour
+                .resourceChain(true);
         
-        // Serve static files từ thư mục hiện tại
-        registry.addResourceHandler("/**")
-                .addResourceLocations("file:./");
+        // Serve forum images specifically
+        registry.addResourceHandler("/uploads/forum/**")
+                .addResourceLocations(
+                    "file:" + System.getProperty("user.dir") + "/uploads/forum/",
+                    "file:uploads/forum/",
+                    "file:./uploads/forum/"
+                )
+                .setCachePeriod(3600)
+                .resourceChain(true);
     }
 
-//    @Override
-//    public void addCorsMappings(CorsRegistry registry) {
-//        // Cấu hình CORS cho phép nguồn https://ai6.vn
-//        registry.addMapping("/**")
-//                .allowedOrigins("*")
-//                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-//                .allowedHeaders("*")
-//                .allowCredentials(true);
-//    }
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        // Cấu hình CORS cho phép nguồn từ Angular dev server
+        registry.addMapping("/**")
+                .allowedOrigins(
+                    "http://localhost:4200",
+                    "https://localhost:4200", 
+                    "http://127.0.0.1:4200",
+                    "https://127.0.0.1:4200"
+                )
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
+    }
 }
