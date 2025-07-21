@@ -50,4 +50,10 @@ public class User extends BaseEntity {
     private Boolean isEmailVerified; // Mặc định sẽ là false khi tạo mới
     private String emailVerificationToken;
     private Instant emailVerificationTokenExpires;
+
+    @Column(name = "reset_password_token")
+    private String resetPasswordToken;
+
+    @Column(name = "reset_password_token_expires")
+    private Instant resetPasswordTokenExpires;
 }

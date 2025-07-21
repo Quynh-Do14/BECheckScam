@@ -11,6 +11,7 @@ import com.example.checkscamv2.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional; // Import @Transactional
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,10 +36,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public ResCreateUserDTO handleCreateUser(User user, String roleName) {
-        // Gán isEmailVerified = false và token/expiry khi tạo người dùng ban đầu
         user.setIsEmailVerified(false);
-        // Token và expiry sẽ được set trong AuthController trước khi gọi handleCreateUser
 
         Set<Role> roles = user.getRoles();
         if (roles == null || roles.isEmpty()) {
@@ -79,6 +79,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public User handleUpdateUser(Long id, UpdateUserRequest updateUserRequest) {
         User currentUser = this.fetchUserById(id);
         if (currentUser != null) {
@@ -113,23 +114,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public Optional<User> handleGetUserByUsername(String username) {
         return this.userRepository.findByEmail(username);
     }
 
     @Override
+    @Transactional
     public void updateUserToken(String token, String email) {
         Optional<User> currentUserOptional = this.handleGetUserByUsername(email);
         if (currentUserOptional.isPresent()) {
             User currentUser = currentUserOptional.get();
             currentUser.setRefreshToken(token);
             this.userRepository.save(currentUser);
-            // ✅ Log để kiểm tra user update
-            System.out.println("✅ Updated refresh token for user: " + email);
         }
     }
 
-    // Implementation các methods mới
     @Override
     public List<User> fetchUsersByRole(RoleName roleName) {
         return this.userRepository.findUsersByRoleName(roleName);
@@ -141,10 +141,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void updateEmailVerificationStatus(User user, String token, Instant expiry) {
         user.setEmailVerificationToken(token);
         user.setEmailVerificationTokenExpires(expiry);
-        user.setIsEmailVerified(false); // Đảm bảo trạng thái ban đầu là false
+        user.setIsEmailVerified(false);
         userRepository.save(user);
     }
 
@@ -154,10 +155,39 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void setEmailVerified(User user) {
         user.setIsEmailVerified(true);
-        user.setEmailVerificationToken(null); // Xóa token sau khi xác minh
-        user.setEmailVerificationTokenExpires(null); // Xóa thời gian hết hạn
+        user.setEmailVerificationToken(null);
+        user.setEmailVerificationTokenExpires(null);
+        userRepository.save(user);
+    }
+
+    // TRIỂN KHAI CÁC PHƯƠNG THỨC MỚI CHO QUÊN MẬT KHẨU
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Override
+    @Transactional
+    public void updateResetPasswordToken(User user, String token, Instant expiryDate) {
+        user.setResetPasswordToken(token);
+        user.setResetPasswordTokenExpires(expiryDate);
+        userRepository.save(user);
+    }
+
+    @Override
+    public Optional<User> findByResetPasswordToken(String token) {
+        return userRepository.findByResetPasswordToken(token);
+    }
+
+    @Override
+    @Transactional
+    public void updatePassword(User user, String newPassword) {
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setResetPasswordToken(null);
+        user.setResetPasswordTokenExpires(null);
         userRepository.save(user);
     }
 }

@@ -27,4 +27,9 @@ public interface UserService {
     void updateEmailVerificationStatus(User user, String token, Instant expiry);
     Optional<User> findUserByEmailVerificationToken(String token);
     void setEmailVerified(User user);
+
+    Optional<User> findByEmail(String email);
+    void updateResetPasswordToken(User user, String token, Instant expiryDate);
+    Optional<User> findByResetPasswordToken(String token);
+    void updatePassword(User user, String newPassword);
 }

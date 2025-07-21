@@ -1,5 +1,3 @@
-// File: src/main/java/com/example/checkscamv2/controller/AuthController.java
-
 package com.example.checkscamv2.controller;
 
 import com.example.checkscamv2.dto.LoginDTO;
@@ -7,6 +5,8 @@ import com.example.checkscamv2.dto.RegisterDTO;
 import com.example.checkscamv2.dto.ResCreateUserDTO;
 import com.example.checkscamv2.dto.ResLoginDTO;
 import com.example.checkscamv2.dto.response.ErrorResponse;
+import com.example.checkscamv2.dto.request.ForgotPasswordRequest;
+import com.example.checkscamv2.dto.request.ResetPasswordRequest;
 import com.example.checkscamv2.entity.User;
 import com.example.checkscamv2.exception.IdInvalidException;
 import com.example.checkscamv2.service.ActivityService;
@@ -85,17 +85,16 @@ public class AuthController {
                 .name(registerDto.getName())
                 .email(registerDto.getEmail())
                 .password(encodedPassword)
-                .isEmailVerified(false) // Mặc định là FALSE
+                .isEmailVerified(false)
                 .build();
 
-        // Tạo token và thời gian hết hạn
-        String verificationToken = UUID.randomUUID().toString(); // Hoặc sử dụng SecureRandom cho an toàn hơn
-        Instant expiryDate = Instant.now().plusSeconds(3600); // Token hết hạn sau 1 giờ (3600 giây)
+        String verificationToken = UUID.randomUUID().toString();
+        Instant expiryDate = Instant.now().plusSeconds(3600);
 
         newUser.setEmailVerificationToken(verificationToken);
         newUser.setEmailVerificationTokenExpires(expiryDate);
 
-        ResCreateUserDTO response = userService.handleCreateUser(newUser, null); // Lưu user với token và trạng thái chưa xác minh
+        ResCreateUserDTO response = userService.handleCreateUser(newUser, null);
 
         try {
             activityService.logJoinActivity(
@@ -107,8 +106,7 @@ public class AuthController {
             System.err.println("Failed to log join activity: " + e.getMessage());
         }
 
-        // Gửi email xác minh
-        String verificationLink = frontendUrl + "/verify-email?token=" + verificationToken; // Hoặc URL API backend nếu frontend redirect
+        String verificationLink = frontendUrl + "/verify-email?token=" + verificationToken;
         String emailContent = String.format(
                 "Chào mừng bạn đến với AI6, %s!\n\n" +
                         "Vui lòng click vào link sau để xác minh tài khoản của bạn:\n" +
@@ -122,14 +120,11 @@ public class AuthController {
             emailService.sendEmail(newUser.getEmail(), "Xác minh tài khoản AI6 của bạn", emailContent);
         } catch (RuntimeException e) {
             System.err.println("Failed to send verification email: " + e.getMessage());
-            // Tùy chọn: Xóa người dùng vừa tạo nếu không thể gửi email để tránh tài khoản rác
-            // Hoặc đơn giản là log lỗi và để người dùng yêu cầu gửi lại
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // ✅ ENDPOINT ĐỂ XÁC MINH EMAIL
     @GetMapping("/verify-email")
     public ResponseEntity<String> verifyEmail(@RequestParam("token") String token) {
         Optional<User> userOptional = userService.findUserByEmailVerificationToken(token);
@@ -148,14 +143,12 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mã xác minh đã hết hạn.");
         }
 
-        // Xác minh thành công
         userService.setEmailVerified(user);
         return ResponseEntity.status(HttpStatus.OK).body("Email của bạn đã được xác minh thành công!");
     }
 
-    // ENDPOINT ĐỂ GỬI LẠI EMAIL XÁC MINH
     @PostMapping("/resend-verification-email")
-    public ResponseEntity<?> resendVerificationEmail(@RequestBody RegisterDTO request) { // Dùng lại RegisterDTO cho email
+    public ResponseEntity<?> resendVerificationEmail(@RequestBody RegisterDTO request) {
         String email = request.getEmail();
         Optional<User> userOptional = userService.handleGetUserByUsername(email);
 
@@ -177,13 +170,11 @@ public class AuthController {
             ));
         }
 
-        // Tạo token mới và thời gian hết hạn mới
         String newVerificationToken = UUID.randomUUID().toString();
-        Instant newExpiryDate = Instant.now().plusSeconds(3600); // 1 giờ
+        Instant newExpiryDate = Instant.now().plusSeconds(3600);
 
-        userService.updateEmailVerificationStatus(user, newVerificationToken, newExpiryDate); // Cập nhật token và expiry mới
+        userService.updateEmailVerificationStatus(user, newVerificationToken, newExpiryDate);
 
-        // Gửi email mới
         String verificationLink = frontendUrl + "/verify-email?token=" + newVerificationToken;
         String emailContent = String.format(
                 "Chào %s,\n\n" +
@@ -209,7 +200,6 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body("Email xác minh mới đã được gửi. Vui lòng kiểm tra hộp thư của bạn.");
     }
 
-
     @PostMapping("/login")
     public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody LoginDTO loginDto) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
@@ -225,11 +215,8 @@ public class AuthController {
         if (currentUserDBOptional.isPresent()) {
             User currentUserDB = currentUserDBOptional.get();
 
-            // ✅ THÊM LOGIC KIỂM TRA XÁC MINH EMAIL TRƯỚC KHI ĐĂNG NHẬP
             if (currentUserDB.getIsEmailVerified() == null || !currentUserDB.getIsEmailVerified()) {
                 throw new RuntimeException("Tài khoản chưa được xác minh email. Vui lòng kiểm tra email của bạn.");
-                // Hoặc bạn có thể trả về một lỗi cụ thể hơn và mã trạng thái HTTP 403 Forbidden
-                // return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
             }
 
             ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
@@ -279,5 +266,73 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, deleteSpringCookie.toString())
                 .body(null);
+    }
+
+    // YÊU CẦU ĐẶT LẠI MẬT KHẨU (GỬI EMAIL)
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        Optional<User> userOptional = userService.findByEmail(request.getEmail());
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.ok("Nếu tài khoản tồn tại, một email đặt lại mật khẩu đã được gửi.");
+        }
+
+        User user = userOptional.get();
+
+        String resetToken = UUID.randomUUID().toString();
+        Instant expiryDate = Instant.now().plusSeconds(3600);
+
+        userService.updateResetPasswordToken(user, resetToken, expiryDate);
+
+        String resetLink = frontendUrl + "/reset-password?token=" + resetToken;
+        String emailContent = String.format(
+                "Xin chào %s,\n\n" +
+                        "Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản AI6 của mình.\n" +
+                        "Vui lòng click vào link sau để đặt lại mật khẩu: \n" +
+                        "%s\n\n" +
+                        "Link này sẽ hết hạn sau 1 giờ. Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.\n\n" +
+                        "Trân trọng,\nĐội ngũ AI6",
+                user.getName(), resetLink
+        );
+
+        try {
+            emailService.sendEmail(user.getEmail(), "Đặt lại mật khẩu AI6 của bạn", emailContent);
+        } catch (RuntimeException e) {
+            System.err.println("Failed to send password reset email to " + user.getEmail() + ": " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ErrorResponse("Có lỗi xảy ra khi gửi email đặt lại mật khẩu. Vui lòng thử lại sau.",
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(), Instant.now().toEpochMilli())
+            );
+        }
+
+        return ResponseEntity.ok("Nếu tài khoản tồn tại, một email đặt lại mật khẩu đã được gửi.");
+    }
+
+    // ĐẶT LẠI MẬT KHẨU (XÁC THỰC TOKEN VÀ CẬP NHẬT MẬT KHẨU)
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        Optional<User> userOptional = userService.findByResetPasswordToken(request.getToken());
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(
+                    "Mã đặt lại mật khẩu không hợp lệ hoặc không tồn tại.",
+                    HttpStatus.BAD_REQUEST.value(),
+                    Instant.now().toEpochMilli()
+            ));
+        }
+
+        User user = userOptional.get();
+
+        if (user.getResetPasswordTokenExpires() == null || Instant.now().isAfter(user.getResetPasswordTokenExpires())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(
+                    "Mã đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu lại.",
+                    HttpStatus.BAD_REQUEST.value(),
+                    Instant.now().toEpochMilli()
+            ));
+        }
+
+        userService.updatePassword(user, request.getNewPassword());
+
+        return ResponseEntity.ok("Mật khẩu của bạn đã được đặt lại thành công.");
     }
 }
