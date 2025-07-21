@@ -57,7 +57,7 @@ public class PlaywrightServiceImpl implements PlaywrightService {
             Browser browser = playwright.chromium().launch(
                     new BrowserType.LaunchOptions()
                             .setHeadless(true)
-                            .setTimeout(8000)
+                            .setTimeout(30000)
                             .setArgs(Arrays.asList(
                                     "--no-sandbox",
                                     "--disable-dev-shm-usage",
