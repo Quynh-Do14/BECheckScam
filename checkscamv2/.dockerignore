@@ -33,4 +33,4 @@ Thumbs.db
 .mvn/wrapper/maven-wrapper.jar
 
 # App-specific
-uploads/
+uploads/ 
