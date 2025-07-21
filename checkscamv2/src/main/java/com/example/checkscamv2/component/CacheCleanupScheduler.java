@@ -1,26 +1,20 @@
 package com.example.checkscamv2.component;
 
+import com.example.checkscamv2.util.FileCacheUtil;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import java.io.File;
-import java.time.Instant;
 
 @Component
 public class CacheCleanupScheduler {
 
-    @Scheduled(cron = "0 0 0 * * *")//giay phut gio ngaytrongthang(1-31) thang nam ngaytrongtuan(0-7)
+    @Scheduled(cron = "0 0 */6 * * *")
     public void cleanOldCache() {
-        File cacheDir = new File("cache/");
-        long now = Instant.now().toEpochMilli();
-        long expiry = 24 * 60 * 60 * 1000; // 24h
-
-        if (cacheDir.exists() && cacheDir.isDirectory()) {
-            for (File file : cacheDir.listFiles()) {
-                if (now - file.lastModified() > expiry) {
-                    file.delete();
-                }
-            }
-        }
+        long startTime = System.currentTimeMillis();
+        System.out.println("[CacheCleanup] Bắt đầu cleanup cache...");
+        FileCacheUtil.clearCache();
+        long endTime = System.currentTimeMillis();
+        System.out.println("Cleanup cache hoàn thành trong " + (endTime - startTime) + "ms");
+        System.out.println("Cache size hiện tại: " + FileCacheUtil.getCacheSize());
+        System.out.println("Memory usage: " + FileCacheUtil.getCacheMemoryUsage() + " bytes");
     }
 }

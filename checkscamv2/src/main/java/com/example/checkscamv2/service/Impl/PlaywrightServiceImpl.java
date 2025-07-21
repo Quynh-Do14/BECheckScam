@@ -4,6 +4,7 @@ import com.example.checkscamv2.service.PlaywrightService;
 import com.example.checkscamv2.util.FileCacheUtil;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.WaitUntilState;
+import com.microsoft.playwright.options.ScreenshotType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 @Service
 @Slf4j
@@ -37,16 +39,53 @@ public class PlaywrightServiceImpl implements PlaywrightService {
     @Override
     public String captureScreenshotAsUrl(String url) {
         String normalizedUrl = normalizeUrl(url);
-        String cacheFileName = null;
+
+        try {
+            String cacheFileName = FileCacheUtil.getCacheFilename(normalizedUrl);
+            if (FileCacheUtil.isFileValid(cacheFileName)) {
+                log.info("Cache hit cho URL: {}", normalizedUrl);
+                return "/" + cacheFileName;
+            }
+        } catch (Exception e) {
+            log.warn("Lỗi khi kiểm tra cache: {}", e.getMessage());
+        }
+
+        log.info("Bắt đầu chụp ảnh cho URL: {}", normalizedUrl);
+        long startTime = System.currentTimeMillis();
 
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch(
                     new BrowserType.LaunchOptions()
                             .setHeadless(true)
-                            .setTimeout(30000)
+                            .setTimeout(8000)
+                            .setArgs(Arrays.asList(
+                                    "--no-sandbox",
+                                    "--disable-dev-shm-usage",
+                                    "--disable-gpu",
+                                    "--disable-web-security",
+                                    "--disable-features=VizDisplayCompositor",
+                                    "--disable-background-timer-throttling",
+                                    "--disable-backgrounding-occluded-windows",
+                                    "--disable-renderer-backgrounding",
+                                    "--disable-field-trial-config",
+                                    "--disable-ipc-flooding-protection",
+                                    "--disable-hang-monitor",
+                                    "--disable-prompt-on-repost",
+                                    "--disable-client-side-phishing-detection",
+                                    "--disable-component-extensions-with-background-pages",
+                                    "--disable-default-apps",
+                                    "--disable-extensions",
+                                    "--disable-sync",
+                                    "--disable-translate",
+                                    "--hide-scrollbars",
+                                    "--mute-audio",
+                                    "--no-first-run",
+                                    "--safebrowsing-disable-auto-update",
+                                    "--disable-blink-features=AutomationControlled",
+                                    "--disable-plugins"
+                            ))
             );
 
-            // Dùng context để set user-agent và viewport
             Browser.NewContextOptions contextOptions = new Browser.NewContextOptions()
                     .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                     .setViewportSize(viewportWidth, viewportHeight);
@@ -55,27 +94,34 @@ public class PlaywrightServiceImpl implements PlaywrightService {
             Page page = context.newPage();
             page.navigate(normalizedUrl,
                     new Page.NavigateOptions()
-                            .setTimeout(20000)
+                            .setTimeout(10000)
                             .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
             );
 
-            page.waitForTimeout(timeout / 2);
-            autoScroll(page);
-            byte[] screenshot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
+            page.waitForTimeout(200);
+            autoScrollOptimized(page);
+            byte[] screenshot = page.screenshot(new Page.ScreenshotOptions()
+                    .setFullPage(true)
+                    .setType(ScreenshotType.JPEG)
+                    .setQuality(75)
+            );
+
             if (screenshot == null) {
+                log.warn("Screenshot null cho URL: {}", normalizedUrl);
                 return handleDefaultScreenshot(normalizedUrl);
             }
 
-            cacheFileName = FileCacheUtil.getCacheFilename(normalizedUrl);
+            String cacheFileName = FileCacheUtil.getCacheFilename(normalizedUrl);
             File cacheFile = new File(cacheFileName);
             java.nio.file.Files.write(cacheFile.toPath(), screenshot);
 
-            if (!FileCacheUtil.isFileValid(cacheFileName)) {
-                java.nio.file.Files.write(cacheFile.toPath(), screenshot);
-            }
+            long endTime = System.currentTimeMillis();
+            log.info("Chụp ảnh hoàn thành cho URL: {} trong {}ms", normalizedUrl, endTime - startTime);
+
             return "/" + cacheFileName;
 
         } catch (Exception e) {
+            log.error("Lỗi khi chụp ảnh URL {}: {}", normalizedUrl, e.getMessage());
             return handleDefaultScreenshot(normalizedUrl);
         }
     }
@@ -108,16 +154,22 @@ public class PlaywrightServiceImpl implements PlaywrightService {
         return url;
     }
 
-    private void autoScroll(Page page) {
+    private void autoScrollOptimized(Page page) {
+        // Auto-scroll tối đa 2s, không giới hạn số lần scroll
         page.evaluate("async () => {" +
                 "   await new Promise((resolve) => {" +
-                "       let totalHeight = 0;" +
-                "       const distance = 300;" +
-                "       const delay = 0;" +
+                "       const maxTime = 2000;" +
+                "       const startTime = Date.now();" +
+                "       const distance = 600;" +
+                "       const delay = 10;" +
                 "       const timer = setInterval(() => {" +
+                "           if (Date.now() - startTime > maxTime) {" +
+                "               clearInterval(timer);" +
+                "               resolve();" +
+                "               return;" +
+                "           }" +
                 "           window.scrollBy(0, distance);" +
-                "           totalHeight += distance;" +
-                "           if (totalHeight >= document.body.scrollHeight) {" +
+                "           if ((window.scrollY + window.innerHeight) >= document.body.scrollHeight) {" +
                 "               clearInterval(timer);" +
                 "               resolve();" +
                 "           }" +
