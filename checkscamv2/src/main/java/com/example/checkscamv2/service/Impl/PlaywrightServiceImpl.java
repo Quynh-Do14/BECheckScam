@@ -40,7 +40,6 @@ public class PlaywrightServiceImpl implements PlaywrightService {
     public String captureScreenshotAsUrl(String url) {
         String normalizedUrl = normalizeUrl(url);
 
-        // 1. Check cache trước
         try {
             String cacheFileName = FileCacheUtil.getCacheFilename(normalizedUrl);
             if (FileCacheUtil.isFileValid(cacheFileName)) {
@@ -55,65 +54,56 @@ public class PlaywrightServiceImpl implements PlaywrightService {
         long startTime = System.currentTimeMillis();
 
         try (Playwright playwright = Playwright.create()) {
-            // 2. Launch browser với flags tối ưu và timeout ngắn
             Browser browser = playwright.chromium().launch(
-                new BrowserType.LaunchOptions()
-                    .setHeadless(true)
-                    .setTimeout(8000)
-                    .setArgs(Arrays.asList(
-                        "--no-sandbox",
-                        "--disable-dev-shm-usage",
-                        "--disable-gpu",
-                        "--disable-web-security",
-                        "--disable-features=VizDisplayCompositor",
-                        "--disable-background-timer-throttling",
-                        "--disable-backgrounding-occluded-windows",
-                        "--disable-renderer-backgrounding",
-                        "--disable-field-trial-config",
-                        "--disable-ipc-flooding-protection",
-                        "--disable-hang-monitor",
-                        "--disable-prompt-on-repost",
-                        "--disable-client-side-phishing-detection",
-                        "--disable-component-extensions-with-background-pages",
-                        "--disable-default-apps",
-                        "--disable-extensions",
-                        "--disable-sync",
-                        "--disable-translate",
-                        "--hide-scrollbars",
-                        "--mute-audio",
-                        "--no-first-run",
-                        "--safebrowsing-disable-auto-update",
-                        "--disable-blink-features=AutomationControlled",
-                        "--disable-plugins"
-                    ))
+                    new BrowserType.LaunchOptions()
+                            .setHeadless(true)
+                            .setTimeout(8000)
+                            .setArgs(Arrays.asList(
+                                    "--no-sandbox",
+                                    "--disable-dev-shm-usage",
+                                    "--disable-gpu",
+                                    "--disable-web-security",
+                                    "--disable-features=VizDisplayCompositor",
+                                    "--disable-background-timer-throttling",
+                                    "--disable-backgrounding-occluded-windows",
+                                    "--disable-renderer-backgrounding",
+                                    "--disable-field-trial-config",
+                                    "--disable-ipc-flooding-protection",
+                                    "--disable-hang-monitor",
+                                    "--disable-prompt-on-repost",
+                                    "--disable-client-side-phishing-detection",
+                                    "--disable-component-extensions-with-background-pages",
+                                    "--disable-default-apps",
+                                    "--disable-extensions",
+                                    "--disable-sync",
+                                    "--disable-translate",
+                                    "--hide-scrollbars",
+                                    "--mute-audio",
+                                    "--no-first-run",
+                                    "--safebrowsing-disable-auto-update",
+                                    "--disable-blink-features=AutomationControlled",
+                                    "--disable-plugins"
+                            ))
             );
 
-            // 3. Context tối ưu
             Browser.NewContextOptions contextOptions = new Browser.NewContextOptions()
-                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                .setViewportSize(viewportWidth, viewportHeight);
+                    .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .setViewportSize(viewportWidth, viewportHeight);
 
             BrowserContext context = browser.newContext(contextOptions);
             Page page = context.newPage();
-
-            // 4. Navigation với timeout ngắn
             page.navigate(normalizedUrl,
-                new Page.NavigateOptions()
-                    .setTimeout(7000)
-                    .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
+                    new Page.NavigateOptions()
+                            .setTimeout(10000)
+                            .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
             );
 
-            // 5. Giảm thời gian chờ sau khi load
             page.waitForTimeout(200);
-
-            // 6. Auto-scroll tối ưu
             autoScrollOptimized(page);
-
-            // 7. Screenshot JPEG tối ưu tốc độ
             byte[] screenshot = page.screenshot(new Page.ScreenshotOptions()
-                .setFullPage(true)
-                .setType(ScreenshotType.JPEG)
-                .setQuality(75)
+                    .setFullPage(true)
+                    .setType(ScreenshotType.JPEG)
+                    .setQuality(75)
             );
 
             if (screenshot == null) {
@@ -165,32 +155,27 @@ public class PlaywrightServiceImpl implements PlaywrightService {
     }
 
     private void autoScrollOptimized(Page page) {
-        // Auto-scroll tối đa 8 lần, mỗi lần 600px, timeout tổng 2s
+        // Auto-scroll tối đa 2s, không giới hạn số lần scroll
         page.evaluate("async () => {" +
-            "   await new Promise((resolve) => {" +
-            "       const maxTime = 2000;" +
-            "       const startTime = Date.now();" +
-            "       let totalHeight = 0;" +
-            "       const distance = 600;" +
-            "       const delay = 20;" +
-            "       const maxScrolls = 8;" +
-            "       let scrollCount = 0;" +
-            "       const timer = setInterval(() => {" +
-            "           if (Date.now() - startTime > maxTime || scrollCount >= maxScrolls) {" +
-            "               clearInterval(timer);" +
-            "               resolve();" +
-            "               return;" +
-            "           }" +
-            "           window.scrollBy(0, distance);" +
-            "           totalHeight += distance;" +
-            "           scrollCount++;" +
-            "           if (totalHeight >= document.body.scrollHeight) {" +
-            "               clearInterval(timer);" +
-            "               resolve();" +
-            "           }" +
-            "       }, delay);" +
-            "   });" +
-            "}");
+                "   await new Promise((resolve) => {" +
+                "       const maxTime = 2000;" +
+                "       const startTime = Date.now();" +
+                "       const distance = 600;" +
+                "       const delay = 10;" +
+                "       const timer = setInterval(() => {" +
+                "           if (Date.now() - startTime > maxTime) {" +
+                "               clearInterval(timer);" +
+                "               resolve();" +
+                "               return;" +
+                "           }" +
+                "           window.scrollBy(0, distance);" +
+                "           if ((window.scrollY + window.innerHeight) >= document.body.scrollHeight) {" +
+                "               clearInterval(timer);" +
+                "               resolve();" +
+                "           }" +
+                "       }, delay);" +
+                "   });" +
+                "}");
     }
 
     private static byte[] loadDefaultErrorScreenshot() {
