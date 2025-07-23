@@ -27,7 +27,7 @@ public class EmailServiceImpl implements EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    @Value("spring.mail.password")
+    @Value("${spring.mail.password}")
     private String password;
 
     @Value("${app.name:AI6 Team}")
@@ -306,7 +306,7 @@ public class EmailServiceImpl implements EmailService {
                     impl.setHost("smtp.gmail.com");
                     impl.setPort(587);
                     impl.setUsername(fromEmail);
-                    impl.setPassword("pnmztvkcxhkqzfxd");
+                    impl.setPassword(password);
 
                     // Set properties
                     Properties props = impl.getJavaMailProperties();
