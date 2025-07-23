@@ -301,8 +301,8 @@ public class TransactionServiceImpl implements TransactionService {
         try {
             // Validate dealer info
             if (!StringUtils.hasText(requestDTO.getDealerName()) ||
-                    !StringUtils.hasText(requestDTO.getDealerEmail()) ||
-                    !StringUtils.hasText(requestDTO.getDealerPhone())) {
+                    !StringUtils.hasText(requestDTO.getDealerEmail())
+                    ) {
                 logger.error("Thông tin giao dịch viên không đầy đủ");
                 return false;
             }
@@ -316,8 +316,7 @@ public class TransactionServiceImpl implements TransactionService {
             }
 
             // Validate phone formats
-            if (!PHONE_PATTERN.matcher(requestDTO.getDealerPhone()).matches() ||
-                    !PHONE_PATTERN.matcher(requestDTO.getPartyAPhone()).matches() ||
+            if (!PHONE_PATTERN.matcher(requestDTO.getPartyAPhone()).matches() ||
                     !PHONE_PATTERN.matcher(requestDTO.getPartyBPhone()).matches()) {
                 logger.error("Định dạng số điện thoại không hợp lệ");
                 return false;
@@ -364,7 +363,6 @@ public class TransactionServiceImpl implements TransactionService {
         entity.setTransactionId(transactionId);
         entity.setDealerName(dto.getDealerName());
         entity.setDealerEmail(dto.getDealerEmail());
-        entity.setDealerPhone(dto.getDealerPhone());
         entity.setPartyAName(dto.getPartyAName());
         entity.setPartyAEmail(dto.getPartyAEmail());
         entity.setPartyAPhone(dto.getPartyAPhone());
@@ -383,7 +381,6 @@ public class TransactionServiceImpl implements TransactionService {
         TransactionRequestDTO dto = new TransactionRequestDTO();
         dto.setDealerName(entity.getDealerName());
         dto.setDealerEmail(entity.getDealerEmail());
-        dto.setDealerPhone(entity.getDealerPhone());
         dto.setPartyAName(entity.getPartyAName());
         dto.setPartyAEmail(entity.getPartyAEmail());
         dto.setPartyAPhone(entity.getPartyAPhone());

@@ -24,9 +24,6 @@ public class TransactionRequestDTO {
     @NotBlank(message = "Email giao dịch viên không được để trống")
     private String dealerEmail;
 
-    @Pattern(regexp = "^[0-9]{10,11}$", message = "Số điện thoại giao dịch viên không hợp lệ")
-    private String dealerPhone;
-
     // Thông tin bên A (người tạo giao dịch)
     @NotBlank(message = "Tên bên A không được để trống")
     private String partyAName;

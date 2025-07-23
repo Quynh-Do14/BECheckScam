@@ -215,7 +215,6 @@ public class EmailServiceImpl implements EmailService {
         content.append("📞 THÔNG TIN LIÊN HỆ\n");
         content.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
         content.append("• Giao dịch viên sẽ liên hệ với bạn trong vòng 24 giờ\n");
-        content.append("• Số điện thoại giao dịch viên: ").append(request.getDealerPhone()).append("\n");
         content.append("• Email giao dịch viên: ").append(request.getDealerEmail()).append("\n\n");
 
         content.append("⚠️ LƯU Ý AN TOÀN\n");

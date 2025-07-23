@@ -30,9 +30,6 @@ public class TransactionRequest {
     @Column(name = "dealer_email", nullable = false)
     private String dealerEmail;
 
-    @Column(name = "dealer_phone", nullable = false)
-    private String dealerPhone;
-
     @Column(name = "party_a_name", nullable = false)
     private String partyAName;
 
