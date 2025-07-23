@@ -49,7 +49,8 @@ public class SecurityConfiguration {
             "/topic/**",
             "/app/**",
             "/api/v1/activities/**",
-            "uploads/**"
+            "uploads/**",
+            "/api/**"
     };
 
     private static final String[] PUBLIC_GET_ENDPOINTS = {
@@ -151,6 +152,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/v1/ranking/**").permitAll()
                         .requestMatchers("/api/v1/activities/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/api/**").permitAll()
                         .requestMatchers("/ws/**", "/ws-simple/**", "/sockjs-node/**", "/topic/**", "/app/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/news/**").permitAll()
