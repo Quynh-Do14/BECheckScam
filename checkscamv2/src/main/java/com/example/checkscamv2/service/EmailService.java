@@ -1,5 +1,6 @@
 package com.example.checkscamv2.service;
 
+import com.example.checkscamv2.dto.request.ServiceRegistrationRequest;
 import com.example.checkscamv2.dto.request.TransactionRequestDTO;
 
 public interface EmailService {
@@ -40,4 +41,18 @@ public interface EmailService {
      */
     boolean sendStatusUpdateNotification(TransactionRequestDTO request, String transactionId,
                                          String oldStatus, String newStatus);
+
+    /**
+     * Gửi email thông báo đăng ký dịch vụ từ khách hàng
+     * @param request thông tin đăng ký dịch vụ
+     * @return true nếu gửi thành công
+     */
+    boolean sendServiceRegistrationNotification(ServiceRegistrationRequest request);
+
+    /**
+     * Gửi email xác nhẫn đăng ký thành công đến khách hàng
+     * @param request thông tin đăng ký dịch vụ
+     * @return true nếu gửi thành công
+     */
+    boolean sendServiceRegistrationConfirmation(ServiceRegistrationRequest request);
 }
