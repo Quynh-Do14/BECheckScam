@@ -38,8 +38,9 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendEmail(String to, String subject, String content) {
         try {
+
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
+            message.setFrom("fromEmail");
             message.setTo(to);
             message.setSubject(subject);
             message.setText(content);
@@ -54,6 +55,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public boolean sendTransactionNotification(TransactionRequestDTO request, String transactionId) {
         try {
+
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(request.getDealerEmail());

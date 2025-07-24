@@ -15,6 +15,7 @@ import com.example.checkscamv2.service.UserService;
 import com.example.checkscamv2.util.SecurityUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpHeaders;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final UserService userService;
@@ -70,6 +72,8 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterDTO registerDto) {
+
+
         if (userService.handleGetUserByUsername(registerDto.getEmail()).isPresent()) {
             ErrorResponse error = new ErrorResponse(
                     "Email đã tồn tại. Vui lòng sử dụng email khác.",
@@ -116,10 +120,15 @@ public class AuthController {
                 newUser.getName(), verificationLink
         );
 
+
+
         try {
+            log.info("🚀 Bắt đầu gửi email xác minh...");
             emailService.sendEmail(newUser.getEmail(), "Xác minh tài khoản AI6 của bạn", emailContent);
-        } catch (RuntimeException e) {
-            System.err.println("Failed to send verification email: " + e.getMessage());
+            log.info("✅ Email xác minh đã gửi thành công!");
+
+        } catch (Exception e) {
+
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
