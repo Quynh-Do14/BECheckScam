@@ -27,7 +27,6 @@ import java.util.Map;
 @RequestMapping("/api/v1/forum")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class ForumController {
 
     private final ForumService forumService;
