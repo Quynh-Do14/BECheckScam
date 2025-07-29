@@ -64,6 +64,7 @@ public class SecurityConfiguration {
             "/api/v1/report/ranking/**",
             "/api/v1/report/ranking",
             "/api/v1/activities/**",
+            "/api/v1/shorts",
     };
 
     private static final String[] PUBLIC_POST_ENDPOINTS = {
