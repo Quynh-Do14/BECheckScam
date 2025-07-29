@@ -23,6 +23,7 @@ public class ForumCommentResponse {
     private Long parentCommentId;
     private Integer likesCount;
     private Boolean isLiked;
+    private Boolean isAnonymous;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<ForumCommentResponse> replies;

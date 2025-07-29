@@ -47,6 +47,9 @@ public class ForumComment extends BaseEntity {
     @Column(name = "is_active", columnDefinition = "BOOLEAN DEFAULT TRUE")
     private Boolean isActive = true;
     
+    @Column(name = "is_anonymous", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isAnonymous = false;
+    
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ForumLike> likes;
     

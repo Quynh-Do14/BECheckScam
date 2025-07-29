@@ -9,6 +9,7 @@ import com.example.checkscamv2.entity.ForumComment;
 import com.example.checkscamv2.entity.ForumLike;
 import com.example.checkscamv2.entity.ForumPost;
 import com.example.checkscamv2.entity.User;
+import com.example.checkscamv2.constant.RoleName;
 import com.example.checkscamv2.exception.DataNotFoundException;
 import com.example.checkscamv2.exception.InvalidParamException;
 import com.example.checkscamv2.repository.ForumCommentRepository;
@@ -17,6 +18,7 @@ import com.example.checkscamv2.repository.ForumPostRepository;
 import com.example.checkscamv2.repository.ReportRepository;
 import com.example.checkscamv2.repository.UserRepository;
 import com.example.checkscamv2.service.ForumService;
+import com.example.checkscamv2.service.NotificationService;
 import com.example.checkscamv2.service.ViewCountService;
 import com.example.checkscamv2.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +53,8 @@ public class ForumServiceImpl implements ForumService {
     private final UserRepository userRepository;
     private final ReportRepository reportRepository;
     private final ViewCountService viewCountService;
+    // DISABLED NOTIFICATION SYSTEM
+    // private final NotificationService notificationService;
 
     @Value("${app.upload.forum-images:uploads/forum}")
     private String uploadDir;
@@ -66,6 +70,8 @@ public class ForumServiceImpl implements ForumService {
     public Page<ForumPostResponse> getAllPosts(Pageable pageable) {
         User currentUser = getCurrentUser();
         Page<ForumPost> posts = forumPostRepository.findActivePostsOrderByCreatedAtDesc(pageable);
+        
+        
         return posts.map(post -> convertToPostResponse(post, currentUser));
     }
 
@@ -143,7 +149,7 @@ public class ForumServiceImpl implements ForumService {
                 .commentsCount(0)
                 .viewCount(0)
                 .isPinned(false)
-                .isActive(true)
+                .isActive(false) // Posts require admin approval by default
                 .build();
 
         ForumPost savedPost = forumPostRepository.save(post);
@@ -231,12 +237,44 @@ public class ForumServiceImpl implements ForumService {
                 .parentComment(parentComment)
                 .likesCount(0)
                 .isActive(true)
+                .isAnonymous(request.getIsAnonymous() != null ? request.getIsAnonymous() : false)
                 .build();
 
         ForumComment savedComment = forumCommentRepository.save(comment);
         
         // Update comments count
         forumPostRepository.updateCommentsCount(post.getId());
+        
+        // Create notification for post author (if not commenting on own post)
+        // DISABLED NOTIFICATION SYSTEM
+        /*
+        if (!post.getAuthor().getId().equals(currentUser.getId())) {
+            if (parentComment == null) {
+                // New comment on post
+                notificationService.createCommentNotification(
+                    post.getId(), 
+                    post.getAuthor().getId(), 
+                    currentUser.getId(),
+                    post.getTitle(),
+                    savedComment.getContent()
+                );
+            } else {
+                // Reply to comment - notify comment author
+                if (!parentComment.getAuthor().getId().equals(currentUser.getId())) {
+                    notificationService.createReplyNotification(
+                        parentComment.getId(),
+                        parentComment.getAuthor().getId(),
+                        currentUser.getId(),
+                        parentComment.getContent(),
+                        savedComment.getContent()
+                    );
+                }
+            }
+        }
+        
+        // Check for mentions in comment content
+        checkForMentions(savedComment.getContent(), savedComment, currentUser);
+        */
         
         log.info("Created new comment on post {} by user: {}", post.getId(), currentUser.getEmail());
         
@@ -282,6 +320,19 @@ public class ForumServiceImpl implements ForumService {
         forumLikeRepository.save(like);
         forumPostRepository.updateLikesCount(postId);
         
+        // Create notification for post author (if not liking own post)
+        // DISABLED NOTIFICATION SYSTEM
+        /*
+        if (!post.getAuthor().getId().equals(currentUser.getId())) {
+            notificationService.createLikePostNotification(
+                postId,
+                post.getAuthor().getId(),
+                currentUser.getId(),
+                post.getTitle()
+            );
+        }
+        */
+        
         log.info("User {} liked post {}", currentUser.getEmail(), postId);
     }
 
@@ -318,6 +369,19 @@ public class ForumServiceImpl implements ForumService {
 
         forumLikeRepository.save(like);
         forumCommentRepository.updateLikesCount(commentId);
+        
+        // Create notification for comment author (if not liking own comment)
+        // DISABLED NOTIFICATION SYSTEM
+        /*
+        if (!comment.getAuthor().getId().equals(currentUser.getId())) {
+            notificationService.createLikeCommentNotification(
+                commentId,
+                comment.getAuthor().getId(),
+                currentUser.getId(),
+                comment.getContent()
+            );
+        }
+        */
         
         log.info("User {} liked comment {}", currentUser.getEmail(), commentId);
     }
@@ -437,6 +501,60 @@ public class ForumServiceImpl implements ForumService {
         return forumPostRepository.countByAuthor(user);
     }
 
+    // Post approval operations
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ForumPostResponse> getPendingPosts(Pageable pageable) {
+        User currentUser = getCurrentUser();
+        Page<ForumPost> posts = forumPostRepository.findPendingPosts(pageable);
+        return posts.map(post -> convertToPostResponse(post, currentUser));
+    }
+
+    @Override
+    public ForumPostResponse approvePost(Long id) {
+        User currentUser = getCurrentUserRequired();
+        
+        // Only admins can approve posts
+        if (!isAdmin(currentUser)) {
+            throw new InvalidParamException("You don't have permission to approve posts");
+        }
+        
+        ForumPost post = forumPostRepository.findById(id)
+                .orElseThrow(() -> new DataNotFoundException("Post not found with id: " + id));
+        
+        if (post.getIsActive()) {
+            throw new InvalidParamException("Post is already approved");
+        }
+        
+        post.setIsActive(true);
+        ForumPost approvedPost = forumPostRepository.save(post);
+        
+        log.info("Post {} approved by admin {}", id, currentUser.getEmail());
+        return convertToPostResponse(approvedPost, currentUser);
+    }
+
+    @Override
+    public void rejectPost(Long id) {
+        User currentUser = getCurrentUserRequired();
+        
+        // Only admins can reject posts
+        if (!isAdmin(currentUser)) {
+            throw new InvalidParamException("You don't have permission to reject posts");
+        }
+        
+        ForumPost post = forumPostRepository.findById(id)
+                .orElseThrow(() -> new DataNotFoundException("Post not found with id: " + id));
+        
+        if (post.getIsActive()) {
+            throw new InvalidParamException("Cannot reject an already approved post");
+        }
+        
+        // Hard delete rejected posts
+        forumPostRepository.delete(post);
+        
+        log.info("Post {} rejected and deleted by admin {}", id, currentUser.getEmail());
+    }
+
     // ✅ OPTIMIZED Helper methods với caching
     private User getCurrentUser() {
         // Kiểm tra cache trước
@@ -481,7 +599,7 @@ public class ForumServiceImpl implements ForumService {
 
     private boolean isAdmin(User user) {
         return user.getRoles().stream()
-                .anyMatch(role -> "ADMIN".equals(role.getName()));
+                .anyMatch(role -> RoleName.ADMIN.equals(role.getName()));
     }
 
     private ForumPostResponse convertToPostResponse(ForumPost post, User currentUser) {
@@ -505,7 +623,7 @@ public class ForumServiceImpl implements ForumService {
                 .viewCount(post.getViewCount())
                 .isLiked(isLiked)
                 .isPinned(post.getIsPinned())
-                .createdAt(post.getCreatedAt())
+                .createdAt(post.getCreatedAt()) // No fallback - use raw value from DB
                 .updatedAt(post.getUpdatedAt())
                 .build();
     }
@@ -524,21 +642,83 @@ public class ForumServiceImpl implements ForumService {
                     .collect(Collectors.toList());
         }
 
+        // Handle anonymous comments
+        String authorName = comment.getAuthor().getName();
+        String authorEmail = comment.getAuthor().getEmail();
+        String authorAvatarUrl = comment.getAuthor().getAvatar();
+        
+        if (comment.getIsAnonymous() != null && comment.getIsAnonymous()) {
+            authorName = "Người dùng ẩn danh";
+            authorEmail = "anonymous@example.com";
+            authorAvatarUrl = null; // No avatar for anonymous comments
+        }
+
         return ForumCommentResponse.builder()
                 .id(comment.getId())
                 .content(comment.getContent())
                 .postId(comment.getPost().getId())
                 .authorId(comment.getAuthor().getId())
-                .authorName(comment.getAuthor().getName())
-                .authorEmail(comment.getAuthor().getEmail())
-                .authorAvatarUrl(comment.getAuthor().getAvatar()) // Use avatar field
+                .authorName(authorName)
+                .authorEmail(authorEmail)
+                .authorAvatarUrl(authorAvatarUrl)
                 .parentCommentId(comment.getParentComment() != null ? 
                         comment.getParentComment().getId() : null)
                 .likesCount(comment.getLikesCount())
                 .isLiked(isLiked)
+                .isAnonymous(comment.getIsAnonymous())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .replies(replies)
                 .build();
     }
+    
+    // Helper method to check for mentions in content - DISABLED
+    /*
+    private void checkForMentions(String content, ForumComment comment, User currentUser) {
+        if (content == null || content.trim().isEmpty()) {
+            return;
+        }
+        
+        // Skip if anonymous comment
+        if (Boolean.TRUE.equals(comment.getIsAnonymous())) {
+            return;
+        }
+        
+        // Extract mentions using regex
+        java.util.regex.Pattern mentionPattern = java.util.regex.Pattern.compile("@([^@\\s]+)");
+        java.util.regex.Matcher matcher = mentionPattern.matcher(content);
+        
+        while (matcher.find()) {
+            String mentionedName = matcher.group(1);
+            
+            // Skip if mentioning self
+            if (mentionedName.equals(currentUser.getName())) {
+                continue;
+            }
+            
+            // Find user by email (since we only have email as unique identifier)
+            Optional<User> mentionedUser = userRepository.findByEmail(mentionedName);
+            if (mentionedUser.isEmpty()) {
+                // Try finding by name if email not found
+                mentionedUser = userRepository.findAll().stream()
+                    .filter(user -> mentionedName.equals(user.getName()))
+                    .findFirst();
+            }
+            
+            if (mentionedUser.isPresent()) {
+                // Create mention notification
+                notificationService.createMentionNotification(
+                    comment.getPost().getId(),
+                    com.example.checkscamv2.entity.Notification.TargetType.COMMENT,
+                    mentionedUser.get().getId(),
+                    currentUser.getId(),
+                    content
+                );
+                
+                log.info("Created mention notification for user {} in comment {}", 
+                    mentionedUser.get().getEmail(), comment.getId());
+            }
+        }
+    }
+    */
 }

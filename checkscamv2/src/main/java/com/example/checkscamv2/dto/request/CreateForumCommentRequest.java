@@ -20,4 +20,6 @@ public class CreateForumCommentRequest {
     private String content;
     
     private Long parentCommentId; // For replies
+    
+    private Boolean isAnonymous = false; // For anonymous comments
 }

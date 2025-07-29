@@ -46,4 +46,9 @@ public interface ForumService {
     Long getTotalPosts();
     Long getTotalActiveUsers();
     Long getPostsCountByUser(Long userId);
+    
+    // Post approval operations
+    Page<ForumPostResponse> getPendingPosts(Pageable pageable);
+    ForumPostResponse approvePost(Long id);
+    void rejectPost(Long id);
 }

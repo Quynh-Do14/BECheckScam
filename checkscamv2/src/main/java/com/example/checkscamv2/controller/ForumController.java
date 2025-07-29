@@ -38,13 +38,16 @@ public class ForumController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String sort) {
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String status) {
         
         try {
             Pageable pageable = PageRequest.of(page, size);
             Page<ForumPostResponse> posts;
             
-            if (keyword != null && !keyword.trim().isEmpty()) {
+            if ("pending".equals(status)) {
+                posts = forumService.getPendingPosts(pageable);
+            } else if (keyword != null && !keyword.trim().isEmpty()) {
                 posts = forumService.searchPosts(keyword, pageable);
             } else if (type != null && !type.trim().isEmpty()) {
                 posts = forumService.getPostsByType(type, pageable);
@@ -364,6 +367,44 @@ public class ForumController {
             return ResponseEntity.badRequest().body(ResponseObject.builder()
                     .status(HttpStatus.BAD_REQUEST)
                     .message("Error retrieving statistics: " + e.getMessage())
+                    .build());
+        }
+    }
+
+    // Post approval endpoints
+    @PutMapping("/posts/{id}/approve")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<ResponseObject> approvePost(@PathVariable Long id) {
+        try {
+            ForumPostResponse post = forumService.approvePost(id);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .message("Post approved successfully")
+                    .data(post)
+                    .build());
+        } catch (Exception e) {
+            log.error("Error approving post with id: {}", id, e);
+            return ResponseEntity.badRequest().body(ResponseObject.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Error approving post: " + e.getMessage())
+                    .build());
+        }
+    }
+
+    @PutMapping("/posts/{id}/reject")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<ResponseObject> rejectPost(@PathVariable Long id) {
+        try {
+            forumService.rejectPost(id);
+            return ResponseEntity.ok(ResponseObject.builder()
+                    .status(HttpStatus.OK)
+                    .message("Post rejected successfully")
+                    .build());
+        } catch (Exception e) {
+            log.error("Error rejecting post with id: {}", id, e);
+            return ResponseEntity.badRequest().body(ResponseObject.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Error rejecting post: " + e.getMessage())
                     .build());
         }
     }
