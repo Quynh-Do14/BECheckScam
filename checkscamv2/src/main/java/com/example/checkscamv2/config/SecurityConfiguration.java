@@ -52,7 +52,7 @@ public class SecurityConfiguration {
             "uploads/**",
             "/api/v1/transactions/**",
             "/api/v1/service/**",
-            "/api/v1/shorts/**"
+            "/api/v1/partnerships/**"
     };
 
     private static final String[] PUBLIC_GET_ENDPOINTS = {
@@ -63,7 +63,7 @@ public class SecurityConfiguration {
             "/api/v1/ranking/subject-detail/**",
             "/api/v1/report/ranking/**",
             "/api/v1/report/ranking",
-            "/api/v1/activities/**"
+            "/api/v1/activities/**",
     };
 
     private static final String[] PUBLIC_POST_ENDPOINTS = {
@@ -156,8 +156,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/v1/transactions/**").permitAll()
                         .requestMatchers("/api/v1/service/**").permitAll()
+                        .requestMatchers("/api/v1/partnerships/**").permitAll()
                         .requestMatchers("/ws/**", "/ws-simple/**", "/sockjs-node/**", "/topic/**", "/app/**").permitAll()
-                        .requestMatchers("/api/v1/shorts/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/news/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/profiles/**").permitAll()

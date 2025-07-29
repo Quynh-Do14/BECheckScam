@@ -2,9 +2,34 @@ package com.example.checkscamv2.service;
 
 import com.example.checkscamv2.dto.request.ServiceRegistrationRequest;
 import com.example.checkscamv2.dto.request.TransactionRequestDTO;
+import java.util.concurrent.CompletableFuture;
 
 public interface EmailService {
+    /**
+     * Hàm gửi email chung (đồng bộ)
+     * @param to email người nhận
+     * @param subject tiêu đề email
+     * @param content nội dung email
+     */
     void sendEmail(String to, String subject, String content);
+
+    /**
+     * Hàm gửi email chung (bất đồng bộ)
+     * @param to email người nhận
+     * @param subject tiêu đề email
+     * @param content nội dung email
+     * @return CompletableFuture<Boolean> kết quả gửi email
+     */
+    CompletableFuture<Boolean> sendEmailAsync(String to, String subject, String content);
+
+    /**
+     * Hàm gửi email sử dụng template (bất đồng bộ)
+     * @param to email người nhận
+     * @param template loại template email
+     * @param data dữ liệu để thay thế trong template
+     * @return CompletableFuture<Boolean> kết quả gửi email
+     */
+    CompletableFuture<Boolean> sendEmailWithTemplate(String to, EmailTemplate template, Object data);
 
     /**
      * Gửi email thông báo giao dịch mới cho giao dịch viên
