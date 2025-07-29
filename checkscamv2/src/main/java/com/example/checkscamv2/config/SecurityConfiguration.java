@@ -157,6 +157,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/v1/transactions/**").permitAll()
                         .requestMatchers("/api/v1/service/**").permitAll()
                         .requestMatchers("/api/v1/partnerships/**").permitAll()
+                        .requestMatchers("/api/v1/shorts/**").permitAll()
                         .requestMatchers("/ws/**", "/ws-simple/**", "/sockjs-node/**", "/topic/**", "/app/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/news/**").permitAll()
