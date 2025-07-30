@@ -52,7 +52,8 @@ public class SecurityConfiguration {
             "uploads/**",
             "/api/v1/transactions/**",
             "/api/v1/service/**",
-            "/api/v1/partnerships/**"
+            "/api/v1/partnerships/**",
+            "/api/v1/shorts/**"
     };
 
     private static final String[] PUBLIC_GET_ENDPOINTS = {
@@ -64,11 +65,13 @@ public class SecurityConfiguration {
             "/api/v1/report/ranking/**",
             "/api/v1/report/ranking",
             "/api/v1/activities/**",
+            "/api/v1/shorts",
     };
 
     private static final String[] PUBLIC_POST_ENDPOINTS = {
             "/api/v1/report/**",
-            "api/v1/mistake/**"
+            "api/v1/mistake/**",
+            "/api/v1/shorts/**"
     };
 
     @Bean
