@@ -8,7 +8,7 @@ import java.util.Optional;
 public interface ShortService {
     List<Short> getAllShorts();
     Optional<Short> getShortById(Long id);
-    Short updateShort(Long id, Short shortObj);
+    Short updateShort(Long id, String title, MultipartFile thumbnail);
     void deleteShort(Long id);
     Short incrementViews(Long id);
     Short createShort(String title, MultipartFile video, MultipartFile thumbnail);
