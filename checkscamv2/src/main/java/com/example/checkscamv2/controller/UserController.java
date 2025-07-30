@@ -72,7 +72,6 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('COLLAB') or #id == authentication.principal.id")
     public ResponseEntity<?> updateUser(
             @PathVariable Long id,
             @ModelAttribute UpdateUserRequest updateUserRequest) {
