@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 
 @Entity
 @Table(name = "activities")
@@ -45,7 +47,7 @@ public class Activity extends BaseEntity {
     
     // Constructors
     public Activity() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDateTime();
     }
     
     public Activity(Long userId, String userName, ActivityType actionType, String targetName) {

@@ -7,6 +7,8 @@ import lombok.experimental.FieldNameConstants;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 
 @Getter
 @Setter
@@ -24,6 +26,6 @@ public abstract class BaseEntity {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        createdAt = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDateTime();
     }
 }

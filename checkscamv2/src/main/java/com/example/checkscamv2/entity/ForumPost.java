@@ -9,6 +9,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Entity
@@ -18,10 +20,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ForumPost extends BaseEntity {
-    
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     
     @Column(nullable = false, length = 500)
     private String title;
@@ -60,11 +58,11 @@ public class ForumPost extends BaseEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ForumLike> likes;
     
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-    
-    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDateTime();
+    }
 }

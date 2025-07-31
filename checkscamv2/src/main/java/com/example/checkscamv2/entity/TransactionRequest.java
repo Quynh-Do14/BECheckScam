@@ -27,6 +27,9 @@ public class TransactionRequest {
     @Column(name = "dealer_name", nullable = false)
     private String dealerName;
 
+    @Column(name = "dealer_phone", nullable = false)
+    private String dealerPhone;
+
     @Column(name = "dealer_email", nullable = false)
     private String dealerEmail;
 
